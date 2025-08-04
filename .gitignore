@@ -35,3 +35,7 @@ out/
 # Dev environment
 bin/
 include/
+
+# HuGo public directory and lock file
+public
+.hugo_build.lock

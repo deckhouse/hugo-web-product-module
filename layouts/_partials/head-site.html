@@ -1,0 +1,10 @@
+{{ $url := "https://deckhouse.io/includes/head-site.html" }}
+{{ with try (resources.GetRemote $url) }}
+  {{ with .Err }}
+    {{ warnf "Failed to fetch remote HTML: %s" . }}
+  {{ else with .Value }}
+    {{ .Content | replaceRE `(["'])/asset` "${1}https://deckhouse.io/asset" | safeHTML }}
+  {{ else }}
+    {{ warnf "Unable to get remote resource %q" $url }}
+  {{ end }}
+{{ end }}

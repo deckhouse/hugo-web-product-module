@@ -1,0 +1,12 @@
+{{ $rootSiteUrl := site.Params.publicRootURL }}
+{{ $assetUrl := index . 0 }}
+{{ $url := printf "%s%s%s" $rootSiteUrl site.Params.remoteAssetURL $assetUrl }}
+{{ with try (resources.GetRemote $url) }}
+  {{ with .Err }}
+    {{ warnf "Failed to fetch remote HTML: %s" . }}
+  {{ else with .Value }}
+    {{ .Content | replaceRE `(["'])/(asset|assets|images)/` (printf "${1}%s/${2}/" $rootSiteUrl) | safeHTML }}
+  {{ else }}
+    {{ warnf "Unable to get remote resource %q" $url }}
+  {{ end }}
+{{ end }}
