@@ -1,29 +1,21 @@
-{{- $channelsInfo := .Site.Data.channels.info }}
-{{- $moduleTitle := "" }}
-
-{{- $_pathElements := index ( findRESubmatch  `^modules/([a-zA-Z0-9-]+)/([a-zA-Z0-9-]+)/*$` .File.Dir 1 ) 0 }}
-{{- $currentModuleName := index $_pathElements 1 }}
-{{- $currentModuleChannel := index $_pathElements 2 }}
-
-
-{{- range sort $channelsInfo "stability" "desc" }}
-  {{- $code := .code }}
-  {{- if eq $code "rock-solid" }}{{ continue }}{{ end }}
-  {{- with $.GetPage ( printf "modules/%s/%s/README.md" $currentModuleName $code  ) }}
-    {{- if and .Params.menuTitle (not $moduleTitle ) }}{{ $moduleTitle = .Params.menuTitle }}{{ end }}
-  {{- end}}
-{{- end}}
-{{- if not $moduleTitle }}{{ $moduleTitle = $currentModuleName }}{{ end }}
-
-  {{- if $moduleTitle }}
-    <li class="breadcrumbs__item">{{ $moduleTitle }}</li>
-  {{- end }}
-    <li class="breadcrumbs__item">
-  {{- if in .Site.Data.helpers.knownPageNames .File.TranslationBaseName }}
-    {{- T (printf "moduleLinkTitle%s" .File.TranslationBaseName) }}
-  {{- else if .LinkTitle }}
-    {{- .LinkTitle }}
-  {{- else if .Title }}
-    {{- .Title }}
-  {{- end -}}
-  </li>
+{{- if .Ancestors -}}
+    {{- $ancestors := .Ancestors.Reverse -}}
+    {{- /* Check that this is not a second-level page. */ -}}
+    {{- if gt (len (after 1 $ancestors)) 0 -}}
+        {{- /* Skip the first element (top level) in the breadcrumbs */ -}}
+        {{- range $index, $element := after 1 $ancestors -}}
+        <li class="breadcrumbs__item">
+            <a href="{{ .RelPermalink }}" class="breadcrumbs__link">
+                {{- if and (eq $index 0) -}}
+                    {{- if eq .Language.Lang "ru" -}}Документация{{- else -}}Documentation{{- end -}}
+                {{- else -}}
+                    {{- .LinkTitle -}}
+                {{- end -}}
+            </a>
+        </li>
+        {{- end }}
+        <li class="breadcrumbs__item breadcrumbs__item--current">
+            <span class="breadcrumbs__current">{{ .LinkTitle }}</span>
+        </li>
+    {{- end -}}
+{{- end -}}
