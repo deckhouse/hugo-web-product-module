@@ -1,0 +1,21 @@
+{{ $rootSiteUrl := site.Params.publicRootURL }}
+{{ $assetUrl := index . 0 }}
+{{ $url := printf "%s%s" $rootSiteUrl $assetUrl }}
+{{ $extension := path.Ext $assetUrl | strings.TrimPrefix "." }}
+{{ with try (resources.GetRemote $url) }}
+  {{ with .Err }}
+    {{ warnf "Failed to fetch remote asset: %s" . }}
+  {{ else }}
+    {{ if eq $extension "js" }}
+<script src="{{ $url }}"></script>
+    {{ else if eq $extension "css" }}
+<link rel="stylesheet" href="{{ $url }}">
+    {{ else if in (slice "jpg" "jpeg" "png" "gif" "svg" "webp") $extension }}
+<img src="{{ $url }}" alt="">
+    {{ else }}
+<!-- Unknown asset type: {{ $extension }} -->
+    {{ end }}
+  {{ end }}
+{{ else }}
+  {{ warnf "Unable to get remote resource %q" $url }}
+{{ end }}

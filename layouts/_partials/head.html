@@ -11,14 +11,14 @@
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="{{ strings.TrimRight "readme.html" .Permalink  }}">
+<meta property="og:url" content="{{ strings.TrimSuffix "readme.html" .Permalink  }}">
 <meta property="og:title" content="{{ .Title }} | {{ .Site.Title }}">
 <meta property="og:description" content="{{ $description }}">
 <meta property="og:image" content="{{ site.BaseURL }}/favicon-32x32.png" />
 
 <!-- Twitter -->
 <meta name="twitter:card" content="summary">
-<meta name="twitter:url" content="{{ strings.TrimRight "readme.html" .Permalink }}">
+<meta name="twitter:url" content="{{ strings.TrimSuffix "readme.html" .Permalink }}">
 <meta name="twitter:title" content="{{ .Title }} | {{ .Site.Title }}">
 <meta name="twitter:description" content="{{ $description }}">
 <meta name="twitter:image" content="{{ site.BaseURL }}/favicon-32x32.png" />

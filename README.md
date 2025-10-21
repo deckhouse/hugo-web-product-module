@@ -11,3 +11,5 @@ replace github.com/deckhouse/hugo-web-product-module => ../hugo-web-product-modu
 ```
 
 or use use the modules configuration [replacements](https://gohugo.io/configuration/module/#replacements) option.
+
+The Hugo version assumed to be 0.150.1. But it maybe will work with higher versions as well.

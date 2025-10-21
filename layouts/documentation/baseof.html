@@ -3,11 +3,12 @@
 <html lang="{{- $lang }}">
   <head>
   {{- partial "head" . }}
-  {{- partial "remote-asset.html" (slice "head-site.html") }}
+  {{- partial "get-remote-include.html" (slice "head-site.html") }}
   </head>
   <body>
     <div class="content">
-     {{- partial "remote-asset.html" (slice "header.html") }}
+     <!-- remote-asset.html header.html -->
+     {{- partial "get-remote-include.html" (slice "header.html") }}
 
      <div class="container">
 
@@ -47,7 +48,7 @@
      </div>
 
      </div>
-     {{- partial "remote-asset.html" (slice "footer.html") }}
+     {{- partial "get-remote-include.html" (slice "footer.html") }}
 
 
   <script type="text/javascript">
@@ -103,5 +104,10 @@
     });
 
   </script>
+{{ if .Store.Get "hasMermaid" }}
+  {{- partial "get-remote-asset.html" (slice "/assets/js/mermaid.min.js") }}
+  <script>mermaid.initialize({ startOnLoad: true });</script>
+{{ end }}
+
   </body>
 </html>
