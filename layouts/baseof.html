@@ -22,14 +22,23 @@
              {{- partial "breadcrumbs" . }}
            </ol>
          </div>
-         <div class="searchV3">
-           <div class="container">
-             <div class="input-wrapper">
-               <input type="text" id="search-input" placeholder="Search..." class="input" data-search-index-path="" data-search-context="">
-               <div id="search-results" class="results" style="display: none"></div>
+         <!--start search-->
+           <div class="searchV3">
+             <div class="container">
+               <div class="input-wrapper">
+                 <input type="text" id="search-input" placeholder='{{ T "search_placeholder_text" }}' class="input"
+                 data-search-index-path="/search.json:1.0"
+                 data-search-context='{{ T "search_context_only_product_docs" }}'
+                 >
+                 <div id="search-results" class="results" style="display: none"></div>
+               </div>
              </div>
            </div>
-         </div>
+           <!--end search-->
+           <!--loading search JS-->
+           <script type="text/javascript" src='/assets/js/fuse.min.js?v={{ .Site.Lastmod | time.Format ":date_long" | hash.FNV32a }}' ></script>
+           <script type="text/javascript" src='/assets/js/search-v3.js?v={{ .Site.Lastmod | time.Format ":date_long" | hash.FNV32a }}' ></script>
+           <!--end loading search JS-->
        </div>
 
        <div class="layout-sidebar">
@@ -103,7 +112,7 @@
 
   </script>
 {{ if .Store.Get "hasMermaid" }}
-  <link rel="stylesheet" href="/assets/js/mermaid.min.js">
+  <script src="/assets/js/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: true });</script>
 {{ end }}
 
