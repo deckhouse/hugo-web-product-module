@@ -1,0 +1,128 @@
+defaultContentLanguage: 'en'
+defaultContentLanguageInSubdir: true
+
+timeZone: "UTC"
+
+markup:
+  tableOfContents:
+    endLevel: 3
+    ordered: false
+    startLevel: 2
+  goldmark:
+    duplicateResourceFiles: true
+    parser:
+      attribute:
+        block: false
+        title: true
+      autoHeadingID: true
+      autoHeadingIDType: github
+      wrapStandAloneImageWithinParagraph: true
+    renderer:
+      hardWraps: false
+      unsafe: true
+      xhtml: false
+  highlight:
+    anchorLineNos: false
+    codeFences: true
+    guessSyntax: false
+    hl_Lines: ""
+    hl_inline: false
+    lineAnchors: ""
+    lineNoStart: 1
+    lineNos: false
+    lineNumbersInTable: true
+    noClasses: false
+    noHl: false
+    style: native
+    tabWidth: 4
+
+disableKinds:
+#- "404"
+#- home
+#- robotsTXT
+- RSS
+#- section
+#- sitemap
+#- taxonomy
+#- term
+
+enableGitInfo: true
+
+sitemap:
+  filename: "sitemap.xml"
+  priority: 0.75
+
+params:
+  analytics:
+    google: XXXX
+    yandex: XXXX
+  # GitHub repository link for editing a page and opening issues.
+  github_repo: https://github.com/deckhouse/prompp
+  # Show "Edit this page" link
+  showedit: true
+  remoteAssetURL: /includes/
+
+  # Enable Lunr.js offline search
+  offlineSearch: false
+
+  # Global relevant links.
+  links:
+
+menus:
+  # Site header menu
+  main:
+  - name: Get started
+    pageRef: /get-started/
+    weight: 1
+  - name: Guides
+    pageRef: /guides/
+    weight: 2
+  - name: Manuals
+    pageRef: /manuals/
+    weight: 3
+  - name: Reference
+    pageRef: /reference/
+    weight: 4
+  main2:
+    - identifier: info  # Родительский пункт "Info"
+      name: Info
+      weight: 1
+    - name: data_model
+      pageRef: /documentation/concept/data_model/
+      weight: 1
+    - name: federation
+      pageRef: /documentation/prompp/federation/federation/
+      weight: 2
+      parent: info  # Указывает, что это дочерний элемент "info"
+
+
+module:
+  imports:
+    # Site templates
+    - path: github.com/deckhouse/hugo-web-product-module
+      #mounts:
+      #  - source: docs/api
+      #    target: content/reference/api/engine/version
+      #    includeFiles: "*.yaml"
+
+languages:
+  en:
+    disabled: false
+    languageDirection: ""
+    languageName: ""
+    title: Deckhouse Prom++
+    weight: 0
+    baseURL: https://deckhouse.io/products/prompp/
+    params:
+      publicRootURL: https://deckhouse.io
+      description: ""
+  ru:
+    disabled: false
+    languageDirection: ""
+    languageName: ""
+    weight: 1
+    title: Deckhouse Prom++
+    baseURL: https://deckhouse.ru/products/prompp/
+    params:
+      publicRootURL: https://deckhouse.ru
+      description: ""
