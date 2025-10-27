@@ -4,7 +4,7 @@
     <nav class="sidebar__container">
         <ul class="sidebar" id="mysidebar">
             {{/* Get all sections on the first level */}}
-            {{ range .Site.Sections }}
+            {{ range where .Site.Sections "Section" "documentation" }}
                 <li class="sidebar__item {{ if or (eq . $currentPage) (.IsAncestor $currentPage) }}active{{ end }}{{ if .Pages }} has-children{{ end }}">
                     <a href="{{ .RelPermalink }}" {{ if and (.IsAncestor $currentPage) (not (eq . $currentPage)) }}style="color: #00122c;"{{ end }}>{{ .Title }}</a>
                     {{- if .Pages }}
