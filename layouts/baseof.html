@@ -11,7 +11,7 @@
      {{- with .Site.Params.productCode }}
        {{- $partialPath = printf "header-%s.html" . }}
      {{- end }}
-     {{- printf "<!-- #include virtual=\"/includes/%s\" -->" $partialPath | safeHTML }}
+     {{- printf "<!--#include virtual=\"/includes/%s\" -->" $partialPath | safeHTML }}
 
      <div class="container">
 
