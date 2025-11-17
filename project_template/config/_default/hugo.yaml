@@ -56,6 +56,8 @@ sitemap:
   priority: 0.75
 
 params:
+  # The same as in the /products/<APP>/ doc URL prefix
+  productCode: XXXX
   analytics:
     google: XXXX
     yandex: XXXX
@@ -63,7 +65,6 @@ params:
   github_repo: https://github.com/deckhouse/XXXX
   # Show "Edit this page" link
   showedit: true
-  remoteAssetURL: /includes/
 
   # Enable Lunr.js offline search
   offlineSearch: false
@@ -75,10 +76,6 @@ module:
   imports:
     # Site templates
     - path: github.com/deckhouse/hugo-web-product-module
-      #mounts:
-      #  - source: docs/api
-      #    target: content/reference/api/engine/version
-      #    includeFiles: "*.yaml"
 
 languages:
   en:

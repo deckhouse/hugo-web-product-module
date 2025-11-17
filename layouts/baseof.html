@@ -7,7 +7,11 @@
   </head>
   <body>
     <div class="content">
-     {{- "<!--#include virtual=\"/includes/header.html\" -->"  | safeHTML }}
+     {{- $partialPath := "header.html" }} {{/* Set a default */}}
+     {{- with .Site.Params.productCode }}
+       {{- $partialPath = printf "header-%s.html" . }}
+     {{- end }}
+     {{- printf "<!-- #include virtual=\"/includes/%s\" -->" $partialPath | safeHTML }}
 
      <div class="container">
 
