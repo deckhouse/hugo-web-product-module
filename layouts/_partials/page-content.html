@@ -5,4 +5,7 @@
     <div class="post-content">
         {{.Content}}
     </div>
+   {{ if .IsSection }}
+     {{ partial "section-index.html" . }}
+   {{ end }}
 </div>

@@ -27,8 +27,8 @@ element_of_array: элемент массива
 example: пример
 examples: примеры
 found: найдено
-javascript_required: "Для просмотра этого содержимого необходимо [включить](https://www.enable-javascript.com/) JavaScript"
 integer: целочисленный
+javascript_required: "Для просмотра этого содержимого необходимо [включить](https://www.enable-javascript.com/) JavaScript"
 length: длина
 max_length: максимальная длина
 min_length: минимальная длина
@@ -81,6 +81,7 @@ search_context_dkpdocs_and_modules: Поиск выполняется по вс�
 search_context_modules: Поиск выполняется по всем модулям, не включая документацию DKP.
 search_context_only_product_docs: Поиск выполняется по всей документации продукта, не включая модули.
 search_placeholder_text: Поиск...
+section_list_title: Содержание раздела
 show_more: Показать ещё
 show_more_pattern: "Показать ещё %s"
 string: строка

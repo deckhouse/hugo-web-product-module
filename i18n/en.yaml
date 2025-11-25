@@ -27,8 +27,8 @@ element_of_array: element of the array
 example: example
 examples: examples
 found: found
-javascript_required: "JavaScript must be [enabled](https://www.enable-javascript.com/) to view this content"
 integer: integer
+javascript_required: "JavaScript must be [enabled](https://www.enable-javascript.com/) to view this content"
 length: length
 max_length: maximum length
 min_length: minimal length
@@ -81,6 +81,7 @@ search_context_dkpdocs_and_modules: The search is performed throughout DKP docum
 search_context_modules: The search is performed throughout modules, excluding the DKP documentation.
 search_context_only_product_docs: The search is performed throughout the product documentation, excluding modules.
 search_placeholder_text: Search...
+section_list_title: Section contents
 show_more: Show more
 show_more_pattern: "Show %s more"
 string: string

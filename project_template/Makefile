@@ -7,7 +7,10 @@ SERVE_FLAGS ?= --cleanDestinationDir --bind=$(BIND)
 HUGOFLAGS ?= --minify
 MARKDOWNLINT_VERSION ?= v0.45.0
 
-.PHONY: help serve build clean lint-markdown lint-markdown-fix
+CURRENT_UID ?= $(shell id -u)
+CURRENT_GID ?= $(shell id -g)
+
+.PHONY: help serve build down lint-markdown lint-markdown-fix mod
 
 help:
 	@echo "Usage: make [target]"
@@ -16,9 +19,10 @@ help:
 	@echo "  up               Start documentation (available at http://localhost and http://ru.localhost)"
 	@echo "  serve            Start Hugo dev server (hugo serve --cleanDestinationDir)"
 	@echo "  build            Build the site to ./public"
-	@echo "  clean            Remove generated public files"
+	@echo "  down             Stop and remove documentation containers"
 	@echo "  lint-markdown    Lint markdown files"
 	@echo "  lint-markdown-fix Fix markdown files automatically"
+	@echo "  mod              Clean up Hugo modules (hugo mod tidy)"
 	@echo "  help             Show this help"
 	@echo
 	@echo "Variables (can be overridden):"
@@ -29,8 +33,10 @@ help:
 	@echo "  MARKDOWNLINT_VERSION=$(MARKDOWNLINT_VERSION)"
 
 up:
-	which werf >/dev/null || source $(trdl use werf 2 beta)
-	werf compose up --dev
+	@UID=$(CURRENT_UID) GID=$(CURRENT_GID) docker compose up
+
+down:
+	docker compose rm -f
 
 serve:
 	$(HUGO) serve $(SERVE_FLAGS)
@@ -39,10 +45,6 @@ build:
 	@echo "Building site to ./public..."
 	$(HUGO) $(HUGOFLAGS)
 
-clean:
-	@echo "Removing ./public/*"
-	@rm -rf public/*
-
 lint-markdown:
 	@echo "Linting markdown files..."
 	@docker run --rm -v "$(PWD):/workdir" -w /workdir ghcr.io/igorshubovych/markdownlint-cli:$(MARKDOWNLINT_VERSION) "**/*.md" -c markdownlint.yaml
@@ -50,3 +52,7 @@ lint-markdown:
 lint-markdown-fix:
 	@echo "Fixing markdown files..."
 	@docker run --rm -v "$(PWD):/workdir" -w /workdir ghcr.io/igorshubovych/markdownlint-cli:$(MARKDOWNLINT_VERSION) "**/*.md" -c markdownlint.yaml --fix
+
+mod:
+	@echo "Cleaning up Hugo modules..."
+	$(HUGO) mod tidy

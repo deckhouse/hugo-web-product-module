@@ -3,7 +3,8 @@
     {{- /* Check that this is not a second-level page. */ -}}
     {{- if gt (len (after 1 $ancestors)) 0 -}}
         {{- /* Skip the first element (top level) in the breadcrumbs */ -}}
-        {{- range $index, $element := after 1 $ancestors -}}
+        {{- range $index, $element := $ancestors -}}
+        {{ if $element.IsHome }}{{ continue }}{{ end }}
         <li class="breadcrumbs__item">
             <a href="{{ .RelPermalink }}" class="breadcrumbs__link">
                 {{- if and (eq $index 0) -}}
