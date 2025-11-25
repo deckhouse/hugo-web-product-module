@@ -2,6 +2,8 @@
 
 This is the source for the Hugo module, used in Deckhouse documentation websites of the Deckhouse products.
 
+Some ideas and code snippets are borrowed from the [Docsy](https://www.docsy.dev/) Hugo theme.
+
 ## Usage
 
 Add it in your hugo configuration.

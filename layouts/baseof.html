@@ -26,6 +26,7 @@
              {{- partial "breadcrumbs" . }}
            </ol>
          </div>
+         {{ if .Params.search_enabled }}
          <!--start search-->
            <div class="searchV3">
              <div class="container">
@@ -43,6 +44,7 @@
            <script type="text/javascript" src='/assets/js/fuse.min.js?v={{ .Site.Lastmod | time.Format ":date_long" | hash.FNV32a }}' ></script>
            <script type="text/javascript" src='/assets/js/search-v3.js?v={{ .Site.Lastmod | time.Format ":date_long" | hash.FNV32a }}' ></script>
            <!--end loading search JS-->
+         {{ end }}
        </div>
 
        <div class="layout-sidebar">
