@@ -4,6 +4,7 @@
     </div>
     <div class="post-content">
         {{.Content}}
+        {{ partial "related-links" . }}
     </div>
    {{ if .IsSection }}
      {{ partial "section-index.html" . }}

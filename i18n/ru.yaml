@@ -76,6 +76,7 @@ parameters: параметры
 pattern: шаблон
 platform: платформа
 required_value_sentence: Обязательный параметр
+related_additional_resources: Дополнительные ресурсы
 reset_filter: Сбросить фильтр
 search_context_dkpdocs_and_modules: Поиск выполняется по всей документации DKP и модулям.
 search_context_modules: Поиск выполняется по всем модулям, не включая документацию DKP.

@@ -76,6 +76,7 @@ parameters: parameters
 pattern: pattern
 platform: platform
 required_value_sentence: Required value
+related_additional_resources: Additional resources
 reset_filter: reset filter
 search_context_dkpdocs_and_modules: The search is performed throughout DKP documentation and modules.
 search_context_modules: The search is performed throughout modules, excluding the DKP documentation.
