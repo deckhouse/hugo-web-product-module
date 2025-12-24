@@ -96,11 +96,11 @@
           changes = true;
           break;
       }
-      if (window.location.host.match(/^deckhouse\.ru\..+\.flant.com$/)) {
-        url.host = window.location.host.replace('deckhouse.ru.', 'deckhouse.');
+      if (window.location.host.match(/^deckhouse-ru\..+\.flant.dev$/)) {
+        url.host = window.location.host.replace('deckhouse-ru.', 'deckhouse.');
         changes = true;
-      } else if (window.location.host.match(/^deckhouse\..+\.flant.com$/)) {
-        url.host = window.location.host.replace('deckhouse.', 'deckhouse.ru.');
+      } else if (window.location.host.match(/^deckhouse\..+\.flant.dev$/)) {
+        url.host = window.location.host.replace('deckhouse.', 'deckhouse-ru.');
         changes = true;
       }
 {{- end }}
