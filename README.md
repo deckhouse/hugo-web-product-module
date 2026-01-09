@@ -65,10 +65,9 @@ The warning message...
 #### Tabs
 
 ```go
-{{< tabs >}}
-{{% tab "MacOS" %}} # MacOS Content {{% /tab %}}
-{{% tab "Linux" %}} # Linux Content {{% /tab %}}
-{{% tab "Windows" %}} # Windows Content {{% /tab %}}
+{{< tabs name="tabs_uniq_name" >}}
+{{% tab name="Tab caption 1" %}}Tab 1 Content {{% /tab %}}
+{{% tab name="Tab caption 2" %}}Tab 2 Content {{% /tab %}}
 {{< /tabs >}}
 ```
 
