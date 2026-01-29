@@ -1,5 +1,5 @@
 configVersion: 1
-project: deckhouse-XXX
+project: deckhouse-!PROJECT-NAME!
 ---
 
 image: web-artifacts
