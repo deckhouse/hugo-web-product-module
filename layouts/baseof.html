@@ -15,24 +15,21 @@
 
      <div class="container">
 
-       <div class="breadcrumbs-container">
-         <div class="breadcrumbs__left">
-           <ol class="breadcrumbs">
-<!--             <li class="breadcrumbs__item">{{ T "modules_documentation" | humanize }}</li>-->
-           </ol>
+       <!--noindex-->
+       <div class="navigation__container">
+         <div class="navigation__container--versions"></div>
+         <div class="breadcrumbs__container">
+             <ol class="breadcrumbs">
+               {{- partial "breadcrumbs" . }}
+             </ol>
          </div>
-         <div class="breadcrumbs__right">
-           <ol class="breadcrumbs">
-             {{- partial "breadcrumbs" . }}
-           </ol>
-         </div>
-         {{ if .Params.search_enabled }}
+         {{ if .Site.Params.offlineSearch }}
          <!--start search-->
            <div class="searchV3">
              <div class="container">
                <div class="input-wrapper">
                  <input type="text" id="search-input" placeholder='{{ T "search_placeholder_text" }}' class="input"
-                 data-search-index-path="/search.json:1.0"
+                 data-search-index-path='{{ strings.TrimSuffix "/" (urls.Parse site.BaseURL).Path }}/documentation/search.json:1.0'
                  data-search-context='{{ T "search_context_only_product_docs" }}'
                  >
                  <div id="search-results" class="results" style="display: none"></div>
@@ -46,6 +43,7 @@
            <!--end loading search JS-->
          {{ end }}
        </div>
+       <!--/noindex-->
 
        <div class="layout-sidebar">
          <div class="layout-sidebar__sidebar">
