@@ -78,7 +78,7 @@ platform: platform
 required_value_sentence: Required value
 related_additional_resources: Additional resources
 reset_filter: reset filter
-search_context_dkpdocs_and_modules: The search is performed across all documentation of the current product.
+search_context_message: The search is performed across all documentation of the current product.
 search_placeholder_text: Search...
 section_list_title: Section contents
 show_more: Show more
