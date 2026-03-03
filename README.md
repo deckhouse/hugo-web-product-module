@@ -36,6 +36,19 @@ The documentation content is written in Markdown with some custom shortcodes.
 
 ### Page parameters (front matter)
 
+#### Search index for documentation section
+
+To generate `documentation/search.json` for offline search, add `search` to the outputs of the `documentation/_index.*` pages:
+
+```yaml
+---
+title: Deckhouse <PRODUCT_NAME>
+outputs:
+  - HTML
+  - search
+---
+```
+
 #### Related links
 
 ```yaml

@@ -1,0 +1,6 @@
+outputFormats:
+  search:
+    mediaType: application/json
+    baseName: search
+    isPlainText: true
+    notAlternative: true

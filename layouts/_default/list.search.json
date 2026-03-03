@@ -1,0 +1,25 @@
+{{- $documents := slice -}}
+{{- range .RegularPagesRecursive -}}
+  {{- if and (ne .Params.hidden true) (ne .Params.noindex true) -}}
+    {{- $bc := slice -}}
+    {{- $skipTopSection := true -}}
+    {{- range .Ancestors.Reverse -}}
+      {{- if .IsHome -}}
+        {{- continue -}}
+      {{- end -}}
+      {{- if $skipTopSection -}}
+        {{- $skipTopSection = false -}}
+        {{- continue -}}
+      {{- end -}}
+      {{- $bc = $bc | append .LinkTitle -}}
+    {{- end -}}
+    {{- $documents = $documents | append (dict
+      "title" .Title
+      "url" .RelPermalink
+      "keywords" .Params.keywords
+      "bc" $bc
+      "content" (.Plain | replaceRE "\\s+" " " | strings.TrimSpace)
+    ) -}}
+  {{- end -}}
+{{- end -}}
+{{- dict "documents" $documents "parameters" (slice) | jsonify -}}
