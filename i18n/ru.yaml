@@ -78,9 +78,7 @@ platform: платформа
 required_value_sentence: Обязательный параметр
 related_additional_resources: Дополнительные ресурсы
 reset_filter: Сбросить фильтр
-search_context_dkpdocs_and_modules: Поиск выполняется по всей документации DKP и модулям.
-search_context_modules: Поиск выполняется по всем модулям, не включая документацию DKP.
-search_context_only_product_docs: Поиск выполняется по всей документации продукта, не включая модули.
+search_context_message: Поиск выполняется по всей документации текущего продукта.
 search_placeholder_text: Поиск...
 section_list_title: Содержание раздела
 show_more: Показать ещё
