@@ -1,7 +1,10 @@
 name: Lint Markdown
 
+#on:
+#  push:
+
 on:
-  push:
+  workflow_call:
 
 jobs:
   lint-markdown:

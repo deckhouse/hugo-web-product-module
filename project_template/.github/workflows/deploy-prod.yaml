@@ -2,10 +2,13 @@
 
 name: Deploy to production
 
+#on:
+#  pull_request:
+#    types:
+#      - closed
+
 on:
-  pull_request:
-    types:
-      - closed
+  workflow_call:
 
 # Cancel in-progress jobs for the same tag/branch.
 concurrency:
