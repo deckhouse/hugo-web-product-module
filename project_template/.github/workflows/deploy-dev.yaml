@@ -2,10 +2,13 @@
 
 name: Deploy to dev environments
 
+#on:
+#  pull_request_target:
+#    types:
+#      - labeled
+
 on:
-  pull_request_target:
-    types:
-      - labeled
+  workflow_call:
 
 # Cancel in-progress jobs for the same tag/branch.
 concurrency:
