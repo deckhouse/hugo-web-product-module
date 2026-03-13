@@ -1,8 +1,5 @@
 name: Lint Markdown
 
-#on:
-#  push:
-
 on:
   workflow_call:
 
