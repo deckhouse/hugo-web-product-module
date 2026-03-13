@@ -2,11 +2,6 @@
 
 name: Deploy to dev environments
 
-#on:
-#  pull_request_target:
-#    types:
-#      - labeled
-
 on:
   workflow_call:
 

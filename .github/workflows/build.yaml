@@ -1,10 +1,5 @@
 name: Build
 
-#on:
-#  push:
-#    branches-ignore:
-#      - main
-
 on:
   workflow_call:
 
