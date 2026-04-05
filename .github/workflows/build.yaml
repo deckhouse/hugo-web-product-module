@@ -74,6 +74,8 @@ jobs:
             - "example\\.com"
             - "localhost"
             - "(10|127)\\.[0-9]+\\.[0-9]+\\.[0-9]+"
+            - "linode\\.com"
+            - "vultr\\.com"
             - "multifactor\\.ru"
             - "gluu\\.org"
             - "8gwifi\\.org"
