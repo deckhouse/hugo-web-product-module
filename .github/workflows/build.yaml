@@ -69,7 +69,7 @@ jobs:
 
       - name: Create htmltest config
         run: |
-          cat > .htmltest.yml << EOF
+          cat > .htmltest.yml <<"EOF"
           IgnoreURLs:
             - "example\\.com"
             - "localhost"
@@ -94,7 +94,6 @@ jobs:
           IgnoreCanonicalBrokenLinks: true
           ExternalTimeout: 30
           EOF
-          cat .htmltest.yml
 
       - name: Check links (English)
         id: check_links_english
