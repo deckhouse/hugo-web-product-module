@@ -94,6 +94,7 @@ jobs:
           IgnoreCanonicalBrokenLinks: true
           ExternalTimeout: 30
           EOF
+          cat .htmltest.yml
 
       - name: Check links (English)
         id: check_links_english
