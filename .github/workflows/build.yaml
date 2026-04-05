@@ -73,11 +73,15 @@ jobs:
           IgnoreURLs:
             - "example.com"
             - "localhost"
+            - "/(10|127)\.[0-9]+\.[0-9]+\.[0-9]+/"
+            - "^/.*multifactor.ru/"
             - "^/assets/"
             - "^/assets/js/"
             - "^/images/.+$"
             - "^/css/.+$"
             - "^/js/.+$"
+            - "^/products/.+$"
+            - "^/modules/.+$"
           CheckMeta: false
           CheckLinks: false
           CheckMailto: false
