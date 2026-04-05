@@ -81,6 +81,7 @@ jobs:
             - "mycompany\\.tld"
             - "^/assets/"
             - "^/assets/js/"
+            - "^/documentation/downloads/latest/prompp-.*$"
             - "^/images/.+$"
             - "^/css/.+$"
             - "^/js/.+$"
