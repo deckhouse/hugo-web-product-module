@@ -84,6 +84,7 @@ jobs:
             - "^/assets/"
             - "^/assets/js/"
             - "^/documentation/downloads/latest/prompp-.*$"
+            - "https://wiki.astralinux.ru/pages/viewpage.action\\?pageId=158601444"
             - "^/images/.+$"
             - "^/css/.+$"
             - "^/gs/.*$"
