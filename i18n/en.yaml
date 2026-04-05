@@ -1,3 +1,5 @@
+# Fallback translations for shortcodes (used when data/i18n.yaml is not loaded).
+common_coming_soon: "coming soon..."
 Documentation: Documentation
 allowed_values: allowed values
 api: API
