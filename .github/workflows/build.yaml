@@ -86,6 +86,8 @@ jobs:
             - "^/documentation/downloads/latest/prompp-.*$"
             - "^/images/.+$"
             - "^/css/.+$"
+            - "^/gs/.*$"
+            - "^/guides/.*$"
             - "^/js/.+$"
             - "^/products/.+$"
             - "^/modules/.+$"
