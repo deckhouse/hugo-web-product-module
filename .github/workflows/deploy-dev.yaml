@@ -48,7 +48,7 @@ jobs:
 
       - name: Create deployment comment
         id: comment
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -110,7 +110,7 @@ jobs:
 
       - name: Update comment - deployment succeeded
         if: success() && steps.comment.outputs.result
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -135,7 +135,7 @@ jobs:
 
       - name: Update comment - deployment failed
         if: failure() && steps.comment.outputs.result
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -172,7 +172,7 @@ jobs:
 
       - name: Remove deploy label
         if: always()
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
