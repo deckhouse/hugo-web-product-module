@@ -7,7 +7,7 @@
             {{/* Get all sections on the first level */}}
             {{ range where .Site.Sections "Section" "documentation" }}
                 <li class="sidebar__item {{ if or (eq . $currentPage) (.IsAncestor $currentPage) }}active{{ end }}{{ if .Pages }} has-children{{ end }}">
-                    <a href="{{ .RelPermalink }}" {{ if and (.IsAncestor $currentPage) (not (eq . $currentPage)) }}style="color: #00122c;"{{ end }}>{{ .LinkTitle }}</a>
+                    <a href="{{ .RelPermalink }}" {{ if and (.IsAncestor $currentPage) (not (eq . $currentPage)) }}style="color: #00122c;"{{ end }}>{{ .LinkTitle }}{{- template "editionBadge" . }}</a>
                     {{- if .Pages }}
                         {{- template "subpages" (dict "parent" . "currentPage" $currentPage "level" 1) }}
                     {{- end }}
@@ -41,6 +41,7 @@
             {{- else }}
                 {{- .File.BaseFileName | humanize }}
             {{- end }}{{ if $isExternal }} ↗{{ end }}
+            {{- template "editionBadge" . }}
           </span>
         </a>
         
@@ -52,5 +53,21 @@
     {{- end }}
     {{- end }}
 </ul>
+{{- end }}
+{{- end }}
+
+{{/* --- editionBadge --- */}}
+{{/* Renders an availability badge next to a sidebar entry based on the page's
+     `edition` front-matter parameter. The list of known edition codes and their
+     short labels lives in data/editions.yaml; tooltip texts are looked up in i18n
+     by the `titleKey` defined there. */}}
+{{- define "editionBadge" }}
+{{- with .Params.edition }}
+    {{- $code := lower . }}
+    {{- $info := index site.Data.editions $code }}
+    {{- if $info }}
+        {{- $title := T $info.titleKey }}
+        <span class="sidebar__badge_v2 sidebar__badge_commercial" title="{{ $title }}">{{ $info.text }}</span>
+    {{- end }}
 {{- end }}
 {{- end }}

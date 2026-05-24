@@ -1,0 +1,15 @@
+ee:
+  text: EE
+  titleKey: edition_ee_title
+se:
+  text: SE
+  titleKey: edition_se_title
+be:
+  text: BE
+  titleKey: edition_be_title
+fe:
+  text: FE
+  titleKey: edition_fe_title
+cse:
+  text: CSE
+  titleKey: edition_cse_title
