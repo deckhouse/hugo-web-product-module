@@ -64,7 +64,7 @@
 {{- define "editionBadge" }}
 {{- with .Params.edition }}
     {{- $code := lower . }}
-    {{- $info := index site.Data.editions $code }}
+    {{- $info := index hugo.Data.editions $code }}
     {{- if $info }}
         {{- $title := T $info.titleKey }}
         <span class="sidebar__badge_v2 sidebar__badge_commercial" title="{{ $title }}">{{ $info.text }}</span>
