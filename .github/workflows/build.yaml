@@ -11,7 +11,8 @@ jobs:
       group: build-${{ github.event.pull_request.head.ref || github.ref_name }}
       cancel-in-progress: true
     container:
-      image: hugomods/hugo:debian-ci-0.150.1
+      image: ghcr.io/gohugoio/hugo:v0.161.1
+      options: --user root
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -27,16 +28,14 @@ jobs:
 
       - name: Extract app name
         id: app_name
-        shell: bash
         run: |
           REPO_NAME="${{ github.repository }}"
           REPO_NAME="${REPO_NAME#*/}"
           echo "Repository name: $REPO_NAME"
-          if [[ "$REPO_NAME" =~ ^website- ]]; then
-            APP_NAME="${REPO_NAME#website-}"
-          else
-            APP_NAME="$REPO_NAME"
-          fi
+          case "$REPO_NAME" in
+            website-*) APP_NAME="${REPO_NAME#website-}" ;;
+            *) APP_NAME="$REPO_NAME" ;;
+          esac
           echo "app_name=$APP_NAME" >> $GITHUB_OUTPUT
           echo "App name: $APP_NAME"
 

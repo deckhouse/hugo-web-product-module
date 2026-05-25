@@ -26,7 +26,7 @@ deprecated_parameter: Параметр устарел
 deprecated_parameter_hint: Поддержка параметра может быть исключена в следующих версиях.
 documentation: документация
 edition_be_title: Доступно в Basic Edition
-edition_cse_title: Доступно в Certified Secure Edition
+edition_cse_title: Доступно в Certified Security Edition
 edition_ee_title: Доступно в Enterprise Edition
 edition_fe_title: Доступно в Federal Edition
 edition_se_title: Доступно в Standard Edition
