@@ -1,0 +1,51 @@
+{{- $currentPage := . }}
+{{- $pages := slice }}
+{{- with .CurrentSection }}
+  {{- range .RegularPages }}
+    {{- if and (not .Params.hidden) (ne .File.BaseFileName "404") }}
+      {{- $pages = $pages | append . }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- $prevPage := false }}
+{{- $nextPage := false }}
+{{- range $index, $page := $pages }}
+  {{- if eq $page $currentPage }}
+    {{- if gt $index 0 }}
+      {{- $prevPage = index $pages (sub $index 1) }}
+    {{- end }}
+    {{- if lt (add $index 1) (len $pages) }}
+      {{- $nextPage = index $pages (add $index 1) }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- if or $prevPage $nextPage }}
+<div class="page-navigation">
+  <div class="page-navigation__container">
+    {{- with $prevPage }}
+    <div class="page-navigation__prev">
+      <a href="{{ .RelPermalink }}" class="page-navigation__link page-navigation__link--prev">
+        <div class="page-navigation__arrow">←</div>
+        <div class="page-navigation__content">
+          <div class="page-navigation__title">{{ .LinkTitle | default .Title }}</div>
+        </div>
+      </a>
+    </div>
+    {{- else }}
+    <div class="page-navigation__prev page-navigation__empty"></div>
+    {{- end }}
+    {{- with $nextPage }}
+    <div class="page-navigation__next">
+      <a href="{{ .RelPermalink }}" class="page-navigation__link page-navigation__link--next">
+        <div class="page-navigation__content">
+          <div class="page-navigation__title">{{ .LinkTitle | default .Title }}</div>
+        </div>
+        <div class="page-navigation__arrow">→</div>
+      </a>
+    </div>
+    {{- else }}
+    <div class="page-navigation__next page-navigation__empty"></div>
+    {{- end }}
+  </div>
+</div>
+{{- end }}
