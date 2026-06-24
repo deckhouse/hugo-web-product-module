@@ -14,16 +14,23 @@
      {{- printf "<!--#include virtual=\"/includes/%s\" -->" $partialPath | safeHTML }}
 
      <div class="container">
+{{- $showBreadcrumbs := ne .Params.breadcrumbs false }}
+{{- $showSidebar := ne .Params.sidebar false }}
+{{- $showToc := ne .Params.toc false }}
+{{- $showSearch := .Site.Params.offlineSearch }}
 
+       {{ if or $showBreadcrumbs $showSearch }}
        <!--noindex-->
        <div class="navigation__container">
          <div class="navigation__container--versions"></div>
+         {{ if $showBreadcrumbs }}
          <div class="breadcrumbs__container">
              <ol class="breadcrumbs">
                {{- partial "breadcrumbs" . }}
              </ol>
          </div>
-         {{ if .Site.Params.offlineSearch }}
+         {{ end }}
+         {{ if $showSearch }}
          <!--start search-->
            <div class="searchV3">
              <div class="container">
@@ -44,18 +51,23 @@
          {{ end }}
        </div>
        <!--/noindex-->
+       {{ end }}
 
-       <div class="layout-sidebar">
+       <div class="layout-sidebar{{ if not $showSidebar }} layout-sidebar--no-sidebar{{ end }}{{ if not $showToc }} layout-sidebar--no-toc{{ end }}">
+         {{ if $showSidebar }}
          <div class="layout-sidebar__sidebar">
            {{- partial "sidebar" . }}
          </div>
+         {{ end }}
          <div class="layout-sidebar__content">
            {{- block "main" . }}
            {{- end }}
          </div>
+         {{ if $showToc }}
          <div class="layout-sidebar__sidebar_right">
            {{- partial "toc" . }}
          </div>
+         {{ end }}
        </div>
      </div>
 
