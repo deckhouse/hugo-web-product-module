@@ -1,0 +1,37 @@
+<script>
+(function () {
+  function resetNestedTabsToFirst(panel) {
+    if (!panel) return;
+
+    var tabsBlock = panel.querySelector('.tabs-block');
+    if (!tabsBlock) return;
+
+    var firstBtn = tabsBlock.querySelector('ul.tabs__container--title > li');
+    if (!firstBtn || typeof activateTabBtn !== 'function') return;
+
+    activateTabBtn(firstBtn);
+
+    var onclickStr = firstBtn.getAttribute('onclick') || '';
+    var match = onclickStr.match(/openTab\w*\(event,\s*'[^']*',\s*'[^']*',\s*'([^']+)'/);
+    if (match) {
+      resetNestedTabsToFirst(document.getElementById(match[1]));
+    }
+  }
+
+  function install() {
+    if (window.__tabsNestedResetInstalled || typeof window.openTab !== 'function') {
+      return;
+    }
+    window.__tabsNestedResetInstalled = true;
+
+    var origOpenTab = window.openTab;
+    window.openTab = function (evt, linksClass, contentClass, contentId) {
+      origOpenTab.apply(this, arguments);
+      resetNestedTabsToFirst(document.getElementById(contentId));
+    };
+  }
+
+  install();
+  document.addEventListener('DOMContentLoaded', install);
+})();
+</script>
