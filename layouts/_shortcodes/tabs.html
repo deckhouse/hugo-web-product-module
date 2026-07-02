@@ -2,19 +2,22 @@
 {{- $tabs_name := .Get "name" | default (.Get 0) | default (printf "%s-%d" (.Page.RelPermalink) (.Page.Store.Get "tabset-counter") ) | anchorize -}}
 {{- $tabs := .Store.Get "tabs" -}}
 {{- if .Inner -}}{{- /* We don't use the inner content, but Hugo will complain if we don't reference it. */ -}}{{- end -}}
+{{- $btn_class := printf "tabs__btn_%s" $tabs_name -}}
+{{- $cont_class := printf "tabs__content_%s" $tabs_name -}}
+{{- .Page.Store.Set "tabs-nested-reset" true -}}
 <div class="tabs-block">
-  <ul class="tabs__container tabs__container--title">
+  <ul class="tabs tabs__container tabs__container--title">
   {{- range $i, $e := $tabs -}}
     {{- $id := printf "%s_%d" $tabs_name $i -}}
-    <li id="tab_{{ $id }}" href="javascript:void(0)" class="tabs__item tabs__item--title{{ if (eq $i 0) }} active{{ end }}"
-       onclick="openTabAndSaveStatus(event, 'tabs__item--title', 'tabs__container--descr', 'block_{{ $id }}');" >
+    <li id="tab_{{ $id }}" href="javascript:void(0)" class="tabs__item {{ $btn_class }}{{ if (eq $i 0) }} active{{ end }}"
+       onclick="openTabAndSaveStatus(event, '{{ $btn_class }}', '{{ $cont_class }}', 'block_{{ $id }}');" >
       {{- $e.name -}}
     </li>
   {{- end -}}
   </ul>
 {{- range $i, $e := $tabs -}}
 {{- $id := printf "%s_%d" $tabs_name $i -}}
-<div id='block_{{ $id }}' class="tabs__container tabs__container--descr{{ if (eq $i 0) }} active{{ end }}">
+<div id='block_{{ $id }}' class="tabs__container tabs__container--descr {{ $cont_class }}{{ if (eq $i 0) }} active{{ end }}">
   {{ $e.content | $.Page.RenderString | safeHTML }}
 </div>
 {{- end -}}
