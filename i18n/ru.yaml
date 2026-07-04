@@ -1,5 +1,9 @@
 # Fallback translations for shortcodes (used when data/i18n.yaml is not loaded).
 common_coming_soon: "скоро..."
+date_format: "02.01.2006"
+download_docx: "Скачать DOCX"
+download_pdf: "Скачать PDF"
+generated_prefix: "Дата генерации:"
 Documentation: Документация
 allowed_values: допустимые значения
 api: API

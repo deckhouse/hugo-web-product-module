@@ -1,0 +1,273 @@
+/* Print stylesheet for the Hugo `print` output format.
+   Loaded from layouts/baseof.print.html. */
+
+@page {
+  size: A4;
+  margin: 20mm 15mm;
+  @bottom-right {
+    content: counter(page);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 10pt;
+    color: #57606a;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-size: 11pt;
+  line-height: 1.5;
+  color: #1f2328;
+}
+
+/* ---------- Cover ---------- */
+
+.pdf-cover {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  text-align: center;
+  page-break-after: always;
+  break-after: page;
+}
+.pdf-cover__title {
+  margin: auto 0;
+  font-size: 42px;
+  font-weight: 700;
+  max-width: 80%;
+  line-height: 1.2;
+}
+.pdf-cover__date {
+  margin-bottom: 40px;
+  font-size: 14px;
+  color: #57606a;
+}
+
+/* ---------- TOC ---------- */
+
+.pdf-toc {
+  page-break-after: always;
+  break-after: page;
+}
+.pdf-toc__title {
+  font-size: 24pt;
+  margin: 0 0 16px 0;
+}
+.pdf-toc__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.pdf-toc__item { margin: 4px 0; }
+.pdf-toc__item a {
+  color: #1f2328;
+  text-decoration: none;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.pdf-toc__item--level-0 > a { font-weight: 600; font-size: 12pt; }
+.pdf-toc__item--level-1 > a { font-size: 11pt; }
+.pdf-toc__item--level-2 > a { font-size: 10pt; color: #57606a; }
+.pdf-toc__dots {
+  flex: 1 0 auto;
+  border-bottom: 1px dotted #8c959f;
+  margin: 0 4px 4px 4px;
+  min-width: 12pt;
+}
+.pdf-toc__page {
+  flex: 0 0 auto;
+  color: #57606a;
+  font-variant-numeric: tabular-nums;
+  font-size: 10pt;
+}
+
+/* ---------- Pages ---------- */
+
+.pdf-page {
+  /* Articles flow continuously; only the cover and TOC force page breaks. */
+  margin-top: 16pt;
+}
+.pdf-page__title {
+  break-after: avoid;
+  page-break-after: avoid;
+  break-before: auto;
+  page-break-before: auto;
+  margin: 0 0 12pt 0;
+  line-height: 1.2;
+}
+/* Section-tree level drives visual heading weight: level-0 is a top-level
+   chapter, level-3+ is a leaf article. */
+.pdf-page__title--level-0 { font-size: 24pt; font-weight: 700; }
+.pdf-page__title--level-1 { font-size: 18pt; font-weight: 700; }
+.pdf-page__title--level-2 { font-size: 14pt; font-weight: 600; }
+.pdf-page__title--level-3 { font-size: 12pt; font-weight: 600; color: #24292f; }
+
+/* Force a page break before top-level chapters so each starts on a fresh
+   page (mirrors the sidebar's top-level grouping). */
+.pdf-page--level-0 {
+  break-before: page;
+  page-break-before: always;
+}
+
+/* Article-level headings share default weight/break-avoid behaviour, but
+   their font size depends on the article's depth in the section tree
+   (matches the TOC hierarchy). The article's own <h1 class="pdf-page__title">
+   acts as the level's "H+1" heading, so h2 inside a level-N article should
+   look like an H(N+2) heading overall. */
+.pdf-page h2, .pdf-page h3, .pdf-page h4, .pdf-page h5, .pdf-page h6 {
+  font-weight: 600;
+  break-after: avoid;
+  page-break-after: avoid;
+  margin-bottom: 6pt;
+}
+.pdf-page h4, .pdf-page h5, .pdf-page h6 { color: #57606a; }
+
+/* level-0 article: H1(title)=24pt, then in-content: h2=18, h3=14, h4=12, h5=11, h6=10.5 */
+.pdf-page--level-0 h2 { font-size: 18pt; margin-top: 16pt; }
+.pdf-page--level-0 h3 { font-size: 14pt; margin-top: 14pt; }
+.pdf-page--level-0 h4 { font-size: 12pt; margin-top: 12pt; }
+.pdf-page--level-0 h5 { font-size: 11pt; margin-top: 10pt; }
+.pdf-page--level-0 h6 { font-size: 10.5pt; margin-top: 10pt; }
+
+/* level-1 article: H1(title)=18pt, then in-content: h2=14, h3=12, h4=11, h5=10.5, h6=10 */
+.pdf-page--level-1 h2 { font-size: 14pt; margin-top: 14pt; }
+.pdf-page--level-1 h3 { font-size: 12pt; margin-top: 12pt; }
+.pdf-page--level-1 h4 { font-size: 11pt; margin-top: 10pt; }
+.pdf-page--level-1 h5 { font-size: 10.5pt; margin-top: 10pt; }
+.pdf-page--level-1 h6 { font-size: 10pt; margin-top: 10pt; }
+
+/* level-2 article: H1(title)=14pt, then in-content: h2=12, h3=11, h4=10.5, h5=10, h6=10 */
+.pdf-page--level-2 h2 { font-size: 12pt; margin-top: 12pt; }
+.pdf-page--level-2 h3 { font-size: 11pt; margin-top: 10pt; }
+.pdf-page--level-2 h4 { font-size: 10.5pt; margin-top: 10pt; }
+.pdf-page--level-2 h5 { font-size: 10pt; margin-top: 10pt; }
+.pdf-page--level-2 h6 { font-size: 10pt; margin-top: 10pt; }
+
+/* level-3+ article: H1(title)=12pt, in-content stays close to body size */
+.pdf-page--level-3 h2 { font-size: 11pt; margin-top: 10pt; }
+.pdf-page--level-3 h3 { font-size: 10.5pt; margin-top: 10pt; }
+.pdf-page--level-3 h4,
+.pdf-page--level-3 h5,
+.pdf-page--level-3 h6 { font-size: 10pt; margin-top: 10pt; }
+
+p, ul, ol { margin: 0 0 8pt 0; }
+
+pre, code {
+  font-family: "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 9.5pt;
+}
+pre {
+  background: #f6f8fa;
+  border: 1px solid #d0d7de;
+  border-radius: 4px;
+  padding: 10px 12px;
+  overflow: hidden;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+code { background: #f6f8fa; padding: 1px 4px; border-radius: 3px; }
+pre code { background: transparent; padding: 0; }
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 8pt 0;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+th, td {
+  border: 1px solid #d0d7de;
+  padding: 6px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+th { background: #f6f8fa; font-weight: 600; }
+
+figure, .mermaid {
+  break-inside: avoid;
+  page-break-inside: avoid;
+  margin: 8pt 0;
+  text-align: center;
+}
+.mermaid svg { max-width: 100%; height: auto; }
+
+img { max-width: 100%; height: auto; }
+
+blockquote {
+  border-left: 4px solid #d0d7de;
+  padding: 4px 12px;
+  margin: 8pt 0;
+  color: #57606a;
+}
+
+/* ---------- Alerts ---------- */
+
+.alert__wrap {
+  border-left: 4px solid;
+  padding: 12px 12px 12px 44px;
+  margin: 12px 0;
+  background: #f6f8fa;
+  position: relative;
+  border-radius: 4px;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.alert__wrap .alert__icon {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  width: 20px;
+  height: 20px;
+}
+.alert__wrap p { margin: 0; }
+.info.alert__wrap    { border-color: #0969da; background: #ddf4ff; }
+.warning.alert__wrap { border-color: #bf8700; background: #fff8c5; }
+.danger.alert__wrap  { border-color: #cf222e; background: #ffebe9; }
+
+/* ---------- Tabs (expanded sequentially) ---------- */
+
+.pdf-tabs { margin: 8pt 0; }
+.pdf-tab {
+  border: 1px solid #d0d7de;
+  border-radius: 4px;
+  margin: 8px 0;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.pdf-tab__title {
+  background: #f6f8fa;
+  padding: 6px 12px;
+  margin: 0;
+  font-weight: 600;
+  font-size: 0.95em;
+  border-bottom: 1px solid #d0d7de;
+}
+.pdf-tab__content { padding: 12px; }
+
+/* ---------- Details (always expanded) ---------- */
+
+.pdf-details { margin: 8pt 0; }
+.pdf-details__summary {
+  font-weight: 600;
+  margin: 8px 0 4px;
+}
+.pdf-details__content { }
+
+/* ---------- Small utility ---------- */
+
+.pdf-icon-edition {
+  display: inline-block;
+  font-size: 0.85em;
+  color: #57606a;
+  margin-left: 4px;
+}
+
+a { color: #0969da; }

@@ -4,3 +4,10 @@ outputFormats:
     baseName: search
     isPlainText: true
     notAlternative: true
+  print:
+    mediaType: text/html
+    baseName: index
+    path: print
+    isHTML: true
+    notAlternative: true
+    permalinkable: true

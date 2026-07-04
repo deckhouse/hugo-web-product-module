@@ -1,0 +1,7 @@
+{{- $type := .Get "type" -}}
+{{- $label := $type -}}
+{{- if eq $type "supported" -}}{{- $label = "✓" -}}
+{{- else if eq $type "not_supported" -}}{{- $label = "✗" -}}
+{{- else if eq $type "coming_soon" -}}{{- $label = T "common_coming_soon" -}}
+{{- end -}}
+<span class="pdf-icon-edition" data-type="{{ $type }}">[{{ $label }}]</span>
