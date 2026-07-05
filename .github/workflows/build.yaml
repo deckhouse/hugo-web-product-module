@@ -84,7 +84,6 @@ jobs:
             - "^/assets/"
             - "^/assets/js/"
             - "^/documentation/downloads/latest/prompp-.*$"
-            - "^/(en|ru)/documentation/downloads/print/.*\\.(pdf|docx)$"
             - "https://wiki.astralinux.ru/pages/viewpage.action\\?pageId=158601444"
             - "^/images/.+$"
             - "^/css/.+$"
@@ -93,6 +92,8 @@ jobs:
             - "^/js/.+$"
             - "^/products/.+$"
             - "^/modules/.+$"
+          IgnoreInternalURLs:
+            - "^/(en|ru)/documentation/downloads/print/.*\\.(pdf|docx)$"
           CheckMeta: false
           CheckLinks: false
           CheckMailto: false
