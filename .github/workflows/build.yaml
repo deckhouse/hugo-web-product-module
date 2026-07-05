@@ -92,7 +92,6 @@ jobs:
             - "^/js/.+$"
             - "^/products/.+$"
             - "^/modules/.+$"
-          IgnoreInternalURLs:
             - "^(/en|/ru)?/documentation/downloads/print/.*\\.(pdf|docx)$"
           CheckMeta: false
           CheckLinks: false
