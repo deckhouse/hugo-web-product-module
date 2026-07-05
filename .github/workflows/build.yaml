@@ -71,6 +71,7 @@ jobs:
         run: |
           cat > .htmltest.yml <<"EOF"
           IgnoreDirs:
+            - "^print(/|$)"
             - "documentation/downloads/print"
           IgnoreURLs:
             - "example\\.com"
