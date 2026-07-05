@@ -12,14 +12,15 @@
  *   PANDOC_REFERENCE_DOC   — path to reference.docx. Default: ./reference.docx (script dir).
  *   PANDOC_LUA_FILTER      — path to alert.lua.       Default: ./alert.lua        (script dir).
  *   PUBLIC_DIR             — root of built site. Default: ./public.
- *   MERMAID_TIMEOUT_MS     — how long to wait for mermaid render. Default: 60000.
+ *   WEASYPRINT             — path to weasyprint binary. Default: "weasyprint".
+ *   MERMAID_CLI_VERSION    — pinned @mermaid-js/mermaid-cli version. Default: 11.4.2.
  */
 
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { execSync } = require('child_process');
-const { chromium } = require('playwright');
+const { execSync, execFileSync } = require('child_process');
+const cheerio = require('cheerio');
 
 const [, , lang, baseUrl] = process.argv;
 if (!lang || !baseUrl) {
@@ -38,7 +39,8 @@ const publicDir = path.resolve(process.env.PUBLIC_DIR || 'public');
 const scriptDir = __dirname;
 const refDoc = process.env.PANDOC_REFERENCE_DOC || path.join(scriptDir, 'reference.docx');
 const luaFilter = process.env.PANDOC_LUA_FILTER || path.join(scriptDir, 'alert.lua');
-const mermaidTimeout = parseInt(process.env.MERMAID_TIMEOUT_MS || '60000', 10);
+const weasyprintBin = process.env.WEASYPRINT || 'weasyprint';
+const mermaidCliVersion = process.env.MERMAID_CLI_VERSION || '11.4.2';
 
 const outDir = path.join(publicDir, lang, 'documentation', 'downloads', 'print');
 fs.mkdirSync(outDir, { recursive: true });
@@ -116,29 +118,26 @@ async function toDataUrl(candidates) {
 }
 
 /**
- * Walk the frozen HTML, download each remote-loaded asset (trying local first,
- * external mirror as fallback), and rewrite the HTML to reference data: URLs.
- *
- * mapping key is the ORIGINAL href/src as it appears in the HTML — so the
- * page.evaluate rewrite step can match by direct string equality.
+ * Walk the frozen HTML with cheerio, download each remote-loaded asset (trying
+ * local first, external mirror as fallback), and rewrite the HTML to reference
+ * data: URLs. Returns the rewritten HTML string.
  */
-async function inlineExternalAssets(page) {
-  const urls = await page.evaluate(() => {
-    const seen = new Set();
-    const push = (u) => { if (u) seen.add(u); };
+async function inlineAssetsCheerio(html) {
+  const $ = cheerio.load(html, { decodeEntities: false });
 
-    document.querySelectorAll('img[src], source[src]').forEach(el => push(el.getAttribute('src')));
-    document.querySelectorAll('img[srcset], source[srcset]').forEach(el => {
-      const srcset = el.getAttribute('srcset') || '';
-      srcset.split(',').forEach(part => push(part.trim().split(/\s+/)[0]));
-    });
-    document.querySelectorAll('link[rel~="stylesheet"][href], link[rel~="icon"][href]').forEach(el => push(el.getAttribute('href')));
-    document.querySelectorAll('script[src]').forEach(el => push(el.getAttribute('src')));
-    document.querySelectorAll('use[href], use[*|href]').forEach(el => {
-      const href = el.getAttribute('href') || el.getAttribute('xlink:href');
-      if (href) push(href.split('#')[0]);
-    });
-    return Array.from(seen);
+  const urls = new Set();
+  const push = (u) => { if (u) urls.add(u); };
+
+  $('img[src], source[src]').each((_, el) => push($(el).attr('src')));
+  $('img[srcset], source[srcset]').each((_, el) => {
+    const srcset = $(el).attr('srcset') || '';
+    srcset.split(',').forEach(part => push(part.trim().split(/\s+/)[0]));
+  });
+  $('link[rel~="stylesheet"][href], link[rel~="icon"][href]').each((_, el) => push($(el).attr('href')));
+  $('script[src]').each((_, el) => push($(el).attr('src')));
+  $('use').each((_, el) => {
+    const href = $(el).attr('href') || $(el).attr('xlink:href');
+    if (href) push(href.split('#')[0]);
   });
 
   const mapping = {};
@@ -154,33 +153,86 @@ async function inlineExternalAssets(page) {
     }
   }
 
-  await page.evaluate((mapping) => {
-    const apply = (el, attr) => {
-      const cur = el.getAttribute(attr);
-      if (cur && mapping[cur]) el.setAttribute(attr, mapping[cur]);
-    };
+  const applyAttr = (el, attr) => {
+    const cur = $(el).attr(attr);
+    if (cur && mapping[cur]) $(el).attr(attr, mapping[cur]);
+  };
 
-    document.querySelectorAll('img[src], source[src]').forEach(el => apply(el, 'src'));
-    document.querySelectorAll('link[rel~="stylesheet"][href], link[rel~="icon"][href]').forEach(el => apply(el, 'href'));
-    document.querySelectorAll('script[src]').forEach(el => apply(el, 'src'));
-    document.querySelectorAll('use[href]').forEach(el => apply(el, 'href'));
-    document.querySelectorAll('use[*|href]').forEach(el => {
-      const cur = el.getAttribute('xlink:href');
-      if (!cur) return;
+  $('img[src], source[src]').each((_, el) => applyAttr(el, 'src'));
+  $('link[rel~="stylesheet"][href], link[rel~="icon"][href]').each((_, el) => applyAttr(el, 'href'));
+  $('script[src]').each((_, el) => applyAttr(el, 'src'));
+  $('use').each((_, el) => {
+    for (const attr of ['href', 'xlink:href']) {
+      const cur = $(el).attr(attr);
+      if (!cur) continue;
       const base = cur.split('#')[0];
-      if (mapping[base]) el.setAttribute('xlink:href', mapping[base]);
-    });
-    document.querySelectorAll('img[srcset], source[srcset]').forEach(el => {
-      const srcset = el.getAttribute('srcset') || '';
-      const rewritten = srcset.split(',').map(part => {
-        const trimmed = part.trim();
-        const [u, ...descriptor] = trimmed.split(/\s+/);
-        const replaced = mapping[u] || u;
-        return descriptor.length ? replaced + ' ' + descriptor.join(' ') : replaced;
-      }).join(', ');
-      el.setAttribute('srcset', rewritten);
-    });
-  }, mapping);
+      if (mapping[base]) $(el).attr(attr, mapping[base]);
+    }
+  });
+  $('img[srcset], source[srcset]').each((_, el) => {
+    const srcset = $(el).attr('srcset') || '';
+    const rewritten = srcset.split(',').map(part => {
+      const trimmed = part.trim();
+      const [u, ...descriptor] = trimmed.split(/\s+/);
+      const replaced = mapping[u] || u;
+      return descriptor.length ? replaced + ' ' + descriptor.join(' ') : replaced;
+    }).join(', ');
+    $(el).attr('srcset', rewritten);
+  });
+
+  return $.html();
+}
+
+/**
+ * If the frozen HTML contains any <div class="mermaid">…</div> blocks (with
+ * plain-text mermaid source, not yet rendered), run `mmdc` on each block and
+ * replace the block's contents with the resulting inline SVG. If no blocks
+ * exist, return the HTML unchanged — the mermaid CLI is NOT invoked at all.
+ */
+async function renderMermaidIfAny(html, tmpDir) {
+  const $ = cheerio.load(html, { decodeEntities: false });
+  const blocks = $('div.mermaid').toArray();
+  if (blocks.length === 0) return html;
+
+  // Skip blocks that already contain an SVG (rendered by something else).
+  const pending = blocks.filter(el => $(el).find('svg').length === 0);
+  if (pending.length === 0) return html;
+
+  console.log(`[mermaid] Rendering ${pending.length} diagram(s) via mmdc ...`);
+
+  for (let i = 0; i < pending.length; i++) {
+    const el = pending[i];
+    const source = $(el).text();
+    const inPath = path.join(tmpDir, `mermaid-${i}.mmd`);
+    const outPath = path.join(tmpDir, `mermaid-${i}.svg`);
+    fs.writeFileSync(inPath, source);
+    execFileSync('npx', [
+      '--yes',
+      `@mermaid-js/mermaid-cli@${mermaidCliVersion}`,
+      '-i', inPath,
+      '-o', outPath,
+      '-b', 'transparent',
+    ], { stdio: 'inherit' });
+    const svg = fs.readFileSync(outPath, 'utf8')
+      // Drop the XML prolog and any DOCTYPE — WeasyPrint accepts inline <svg>
+      // fine but not a leading <?xml …?>.
+      .replace(/<\?xml[\s\S]*?\?>\s*/i, '')
+      .replace(/<!DOCTYPE[\s\S]*?>\s*/i, '');
+    $(el).html(svg);
+  }
+
+  return $.html();
+}
+
+/**
+ * Invoke WeasyPrint. Failure (non-zero exit) aborts the script.
+ */
+function renderPdfWithWeasyprint(htmlPath, pdfPath) {
+  execFileSync(weasyprintBin, [
+    htmlPath,
+    pdfPath,
+    '--presentational-hints',
+  ], { stdio: 'inherit' });
 }
 
 /**
@@ -218,7 +270,7 @@ async function addDocxHeader(zip, docTitle) {
           '<w:pBdr>' +
             '<w:bottom w:val="single" w:sz="4" w:space="1" w:color="8C959F"/>' +
           '</w:pBdr>' +
-          '<w:jc w:val="center"/>' +
+          '<w:jc w:val="left"/>' +
           runProps +
         '</w:pPr>' +
         `<w:r>${runProps}<w:t xml:space="preserve">${escapeXml(docTitle)}</w:t></w:r>` +
@@ -586,7 +638,7 @@ async function postProcessDocx(docxPath, docTitle) {
 /**
  * Prepare the frozen HTML for the Pandoc → DOCX pipeline.
  *
- * The frozen HTML was tailored for the Chromium PDF writer; DOCX has its own
+ * The frozen HTML was tailored for the WeasyPrint PDF writer; DOCX has its own
  * needs:
  *   - Pandoc reads <title> as document title and prints it above the auto-
  *     generated TOC — duplicating our cover heading. Strip <title>.
@@ -673,28 +725,10 @@ function prepareDocxHtml(html, lang) {
     '$2'
   );
 
-  // 5. Prefix every id inside each <article> so Pandoc's auto-identifier
-  //    algorithm (which slugifies heading text) can't produce duplicates
-  //    across articles. Prefix = article's own id + "--".
-  out = out.replace(
-    /(<article\b[^>]*\bid=("|')([^"']+)\2[^>]*>)([\s\S]*?)(<\/article>)/gi,
-    (m, openTag, q, articleId, body, closeTag) => {
-      const prefix = articleId + '--';
-      // Rewrite id="X" → id="<prefix>X".
-      let rewritten = body.replace(/\bid=("|')([^"']+)\1/g, (mm, qq, id) =>
-        `id=${qq}${prefix}${id}${qq}`
-      );
-      // Rewrite intra-article <a href="#X"> → <a href="#<prefix>X">.
-      rewritten = rewritten.replace(
-        /(href=("|'))#([^"'#]+)(\2)/g,
-        (mm, pre, qq, target, post) => `${pre}#${prefix}${target}${post}`
-      );
-      return openTag + rewritten + closeTag;
-    }
-  );
-
-  // 6. De-duplicate any remaining id attributes (e.g. those outside articles
-  //    or introduced by anchor-inside-content quirks).
+  // 5. De-duplicate any remaining id attributes. Article-level dedup already
+  //    ran in dedupeArticleIds() over the frozen HTML; this handles ids that
+  //    live outside <article> boundaries or that our earlier substitution
+  //    couldn't unify (e.g. anchor-inside-content quirks).
   {
     const seen = new Map();
     out = out.replace(/\bid=("|')([^"']+)\1/g, (m, q, id) => {
@@ -705,10 +739,9 @@ function prepareDocxHtml(html, lang) {
     });
   }
 
-  // 7. Suppress Pandoc's auto-identifier generation for headings by giving
-  //    every heading without an id an explicit generated one. We prefix by
-  //    the enclosing article slug, so distinct articles never collide.
-  //    Iterate articles again for context.
+  // 6. Suppress Pandoc's auto-identifier generation for headings by giving
+  //    every heading without an id an explicit one. Article-scoped prefix
+  //    guarantees uniqueness across articles.
   out = out.replace(
     /(<article\b[^>]*\bid=("|')([^"']+)\2[^>]*>)([\s\S]*?)(<\/article>)/gi,
     (m, openTag, q, articleId, body, closeTag) => {
@@ -729,229 +762,101 @@ function prepareDocxHtml(html, lang) {
 }
 
 /**
- * Insert printed-page numbers next to each TOC entry.
+ * Prefix every id inside each <article> with the article's own id, so
+ * heading slugs like `parameters` or `usage` don't collide across pages.
+ * Also rewrite intra-article `href="#X"` links so they still resolve.
  *
- * Approach: render the DOM in a screen-media stylesheet that emulates paginated
- * A4 output (fixed-height boxes stacked vertically), then compute for each
- * `.pdf-toc__item a[href^="#"]` target its ceil(offsetTop / pageHeight) → page
- * number. The Chromium PDF writer paginates at the same CSS page size we set,
- * so the numbers line up.
+ * Cross-article links (whose target is a top-level article id) are left
+ * untouched — those remain valid pointers to other articles.
  *
- * Numbers are rendered as trailing spans: "Section title  ......  12".
+ * Runs on the frozen HTML for BOTH the PDF (WeasyPrint) and DOCX (Pandoc)
+ * branches; without it WeasyPrint emits "Anchor defined twice" warnings and
+ * target-counter() in the TOC can resolve to the wrong page.
  */
-async function annotateTocWithPageNumbers(page) {
-  await page.emulateMedia({ media: 'print' });
-  const measurement = await page.evaluate(() => {
-    const pageHeightCss = 1123;
-    const marginTopCss = 76;
-    const marginBottomCss = 76;
-    const contentHeight = pageHeightCss - marginTopCss - marginBottomCss;
+function dedupeArticleIds(html) {
+  const $ = cheerio.load(html, { decodeEntities: false });
+  const articleIds = new Set();
+  $('article[id]').each((_, el) => articleIds.add($(el).attr('id')));
 
-    const numbers = {};
-    document.querySelectorAll('.pdf-toc__item a[href^="#"]').forEach(link => {
-      const id = link.getAttribute('href').slice(1);
-      if (!id) return;
-      const target = document.getElementById(id);
+  // Per-article rename map: original id → unique id after prefix + suffix.
+  // Used to rewrite intra-article href="#…" pointers to the same targets.
+  $('article[id]').each((_, el) => {
+    const articleId = $(el).attr('id');
+    const prefix = articleId + '--';
+    const rename = new Map();
+    const usedInThisArticle = new Set();
+
+    $(el).find('[id]').each((__, e) => {
+      const cur = $(e).attr('id');
+      if (!cur) return;
+      let candidate = prefix + cur;
+      // Hugo emits both <h3 id="X"> and a sibling <span id="X"> anchor for the
+      // same heading — after prefixing they collide. Append -N until unique.
+      if (usedInThisArticle.has(candidate)) {
+        let n = 2;
+        while (usedInThisArticle.has(candidate + '-' + n)) n += 1;
+        candidate = candidate + '-' + n;
+      }
+      usedInThisArticle.add(candidate);
+      $(e).attr('id', candidate);
+      // Only record the FIRST occurrence of each original id — href="#X"
+      // should land on the primary target (the heading), not the anchor span.
+      if (!rename.has(cur)) rename.set(cur, candidate);
+    });
+
+    $(el).find('a[href^="#"]').each((__, e) => {
+      const cur = $(e).attr('href');
+      if (!cur) return;
+      const target = cur.slice(1);
       if (!target) return;
-      const rect = target.getBoundingClientRect();
-      const top = rect.top + window.scrollY;
-      numbers[id] = Math.max(1, Math.floor(top / contentHeight) + 1);
+      if (articleIds.has(target)) return;
+      const renamed = rename.get(target);
+      if (renamed) $(e).attr('href', '#' + renamed);
+      else $(e).attr('href', '#' + prefix + target);
     });
-
-    // Collect level-0 (top chapters) and level-1 (sub-chapters) articles for
-    // running header. Each article's own <h1 class="pdf-page__title"> serves
-    // as the label; startPage comes from the article's offsetTop.
-    const collectSections = (selector) => {
-      const acc = [];
-      document.querySelectorAll(selector).forEach(a => {
-        const title = a.querySelector('.pdf-page__title')?.textContent?.trim() || '';
-        const rect = a.getBoundingClientRect();
-        const top = rect.top + window.scrollY;
-        const startPage = Math.max(1, Math.floor(top / contentHeight) + 1);
-        acc.push({ title, startPage });
-      });
-      acc.sort((a, b) => a.startPage - b.startPage);
-      return acc;
-    };
-
-    const sections = collectSections('article.pdf-page--level-0');
-    const subsections = collectSections('article.pdf-page--level-1');
-
-    return { numbers, sections, subsections };
   });
-  await page.emulateMedia({ media: null });
 
-  const { numbers, sections, subsections } = measurement;
-
-  await page.evaluate((numbers) => {
-    document.querySelectorAll('.pdf-toc__item a[href^="#"]').forEach(link => {
-      const id = link.getAttribute('href').slice(1);
-      const page = numbers[id];
-      if (!page) return;
-      const dots = document.createElement('span');
-      dots.className = 'pdf-toc__dots';
-      dots.setAttribute('aria-hidden', 'true');
-      const num = document.createElement('span');
-      num.className = 'pdf-toc__page';
-      num.textContent = String(page);
-      link.appendChild(dots);
-      link.appendChild(num);
-    });
-  }, numbers);
-
-  return { sections, subsections };
+  return $.html();
 }
 
 /**
- * Overlay a running header on every PDF page starting from page 2.
- * Header text: "<docTitle> — <currentSectionTitle>".
+ * Extract the document title from the frozen HTML. Reads
+ * <h1 class="pdf-cover__title">, falling back to <title>.
  */
-async function addPdfHeader(pdfPath, docTitle, sections, subsections) {
-  const { PDFDocument, StandardFonts, rgb } = require('pdf-lib');
-  const fontkit = require('@pdf-lib/fontkit');
-  const bytes = fs.readFileSync(pdfPath);
-  const pdf = await PDFDocument.load(bytes);
-  pdf.registerFontkit(fontkit);
-
-  // Standard 14 PDF fonts are WinAnsi-only (no Cyrillic). Embed a Unicode
-  // TrueType font instead. Look for common system paths; fall back to the
-  // WinAnsi Helvetica if none found (English-only content still works).
-  const candidateFontPaths = [
-    '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
-    '/usr/share/fonts/dejavu/DejaVuSans.ttf',
-    '/usr/share/fonts/TTF/DejaVuSans.ttf',
-    '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
-    '/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf',
-  ];
-  let font;
-  for (const p of candidateFontPaths) {
-    if (fs.existsSync(p)) {
-      font = await pdf.embedFont(fs.readFileSync(p), { subset: true });
-      break;
-    }
-  }
-  if (!font) {
-    console.warn('[addPdfHeader] No Unicode font found on the system — falling back to Helvetica (Cyrillic will fail).');
-    font = await pdf.embedFont(StandardFonts.Helvetica);
-  }
-
-  // For each page, find the section it belongs to (largest startPage ≤ page).
-  const pages = pdf.getPages();
-  for (let i = 0; i < pages.length; i++) {
-    const pageNum = i + 1;
-    if (pageNum < 2) continue; // no header on the cover
-    const pickCurrent = (list) => {
-      let cur = null;
-      for (const s of list) {
-        if (s.startPage <= pageNum) cur = s;
-        else break;
-      }
-      return cur;
-    };
-    const chapter = pickCurrent(sections);
-    const subChapter = pickCurrent(subsections);
-    // A sub-chapter is only relevant if it belongs to the current chapter
-    // (i.e. it started at/after the chapter's own start page).
-    const showSub =
-      chapter && subChapter && subChapter.startPage >= chapter.startPage;
-    let text = docTitle;
-    if (chapter) {
-      text = `${docTitle} — ${chapter.title}`;
-      if (showSub) text += ` -> ${subChapter.title}`;
-    }
-
-    const p = pages[i];
-    const { width, height } = p.getSize();
-    const fontSize = 9;
-    const marginTop = 30; // pt from the top edge
-    const marginX = 42;   // pt from the left edge (≈ 15mm)
-
-    // Draw the text near the top-right, muted grey.
-    const textWidth = font.widthOfTextAtSize(text, fontSize);
-    // Truncate if the header is wider than the printable area.
-    let drawText = text;
-    let drawWidth = textWidth;
-    const maxWidth = width - 2 * marginX;
-    if (drawWidth > maxWidth) {
-      // Trim from the right until it fits, ending with "…".
-      while (drawText.length > 3 && font.widthOfTextAtSize(drawText + '…', fontSize) > maxWidth) {
-        drawText = drawText.slice(0, -1);
-      }
-      drawText += '…';
-      drawWidth = font.widthOfTextAtSize(drawText, fontSize);
-    }
-
-    p.drawText(drawText, {
-      x: (width - drawWidth) / 2,
-      y: height - marginTop,
-      size: fontSize,
-      font,
-      color: rgb(0x57 / 255, 0x60 / 255, 0x6a / 255),
-    });
-
-    // Thin muted rule below the header text.
-    p.drawLine({
-      start: { x: marginX, y: height - marginTop - 5 },
-      end: { x: width - marginX, y: height - marginTop - 5 },
-      thickness: 0.5,
-      color: rgb(0x8c / 255, 0x95 / 255, 0x9f / 255),
-    });
-  }
-
-  fs.writeFileSync(pdfPath, await pdf.save());
+function extractDocTitle(html) {
+  const $ = cheerio.load(html, { decodeEntities: false });
+  const el = $('.pdf-cover__title').first();
+  const t = el.length ? el.text() : $('title').first().text();
+  return (t || '').trim();
 }
 
 (async () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'print-export-'));
   const frozenHtmlPath = path.join(tmpDir, `frozen-${lang}.html`);
 
-  const browser = await chromium.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage();
-
-  console.log(`[${lang}] Loading ${printURL} ...`);
-  await page.goto(printURL, { waitUntil: 'networkidle', timeout: 120_000 });
-
-  // Wait for mermaid to finish rendering (if any diagrams present).
-  const mermaidCount = await page.evaluate(() => document.querySelectorAll('.mermaid').length);
-  if (mermaidCount > 0) {
-    console.log(`[${lang}] Waiting for ${mermaidCount} mermaid diagrams ...`);
-    await page.waitForFunction(
-      () => Array.from(document.querySelectorAll('.mermaid')).every(el => el.querySelector('svg')),
-      null,
-      { timeout: mermaidTimeout }
-    );
+  console.log(`[${lang}] Fetching ${printURL} ...`);
+  const res = await fetch(printURL);
+  if (!res.ok) {
+    throw new Error(`Fetch ${printURL}: HTTP ${res.status}`);
   }
+  let html = await res.text();
+
+  console.log(`[${lang}] Checking for mermaid diagrams ...`);
+  html = await renderMermaidIfAny(html, tmpDir);
 
   console.log(`[${lang}] Inlining external assets from ${externalBase} ...`);
-  await inlineExternalAssets(page);
+  html = await inlineAssetsCheerio(html);
 
-  console.log(`[${lang}] Computing TOC page numbers ...`);
-  const { sections, subsections } = await annotateTocWithPageNumbers(page);
+  console.log(`[${lang}] Deduplicating cross-article ids ...`);
+  html = dedupeArticleIds(html);
 
-  // Read the document title from the current page so the PDF and DOCX
-  // headers stay consistent with whatever pdfTitle Hugo rendered.
-  const docTitle = await page.evaluate(() => {
-    const el = document.querySelector('.pdf-cover__title');
-    return (el ? el.textContent : document.title || '').trim();
-  });
-
-  const html = await page.content();
   fs.writeFileSync(frozenHtmlPath, html);
   console.log(`[${lang}] Frozen HTML: ${frozenHtmlPath} (${(html.length / 1024).toFixed(1)} KiB)`);
 
-  console.log(`[${lang}] Writing PDF: ${outPdf}`);
-  await page.pdf({
-    path: outPdf,
-    format: 'A4',
-    printBackground: true,
-    preferCSSPageSize: true,
-  });
+  const docTitle = extractDocTitle(html);
 
-  await browser.close();
-
-  console.log(`[${lang}] Overlaying PDF header on pages ≥ 2 ...`);
-  await addPdfHeader(outPdf, docTitle, sections, subsections);
+  console.log(`[${lang}] Writing PDF via WeasyPrint: ${outPdf}`);
+  renderPdfWithWeasyprint(frozenHtmlPath, outPdf);
 
   // DOCX-specific HTML: drop the HTML TOC (Pandoc's --toc renders a Word-native
   // one), add an explicit page break after the cover, force alert-icon size

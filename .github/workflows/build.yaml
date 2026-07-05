@@ -64,13 +64,10 @@ jobs:
       pdf_enabled: ${{ steps.pdf_enabled.outputs.enabled }}
 
   generate-exports:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     name: Generate PDF and DOCX
     needs: build
     if: needs.build.outputs.pdf_enabled == 'true'
-    container:
-      image: mcr.microsoft.com/playwright:v1.61.1-noble
-      options: --user root
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -83,18 +80,24 @@ jobs:
           name: built-site
           path: public
 
-      - name: Install pandoc, yq and Node deps (playwright, http-server)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install weasyprint, pandoc, Node deps
         run: |
-          apt-get update -qq
-          apt-get install -y -qq pandoc yq poppler-utils fonts-dejavu-core
-          mkdir -p /deps && cd /deps
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq \
+            weasyprint pandoc yq poppler-utils \
+            fonts-dejavu-core fonts-liberation
+          mkdir -p /tmp/deps && cd /tmp/deps
           npm init -y >/dev/null
-          # Playwright npm package version MUST match the container's browser bundle.
-          npm install --silent --no-audit --no-fund playwright@1.61.1 http-server jszip pdf-lib @pdf-lib/fontkit
+          npm install --silent --no-audit --no-fund cheerio http-server jszip
 
       - name: Generate PDF and DOCX
         env:
-          NODE_PATH: /deps/node_modules
+          NODE_PATH: /tmp/deps/node_modules
         run: |
           set -e
           # productCode → file name
@@ -110,7 +113,7 @@ jobs:
           echo "PRODUCT_CODE=$PRODUCT_CODE"
 
           # Static file server on the built site
-          /deps/node_modules/.bin/http-server public -p 8080 -s > /tmp/http.log 2>&1 &
+          /tmp/deps/node_modules/.bin/http-server public -p 8080 -s > /tmp/http.log 2>&1 &
           HTTP_PID=$!
           trap "kill $HTTP_PID 2>/dev/null || true" EXIT
 

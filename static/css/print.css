@@ -1,15 +1,94 @@
 /* Print stylesheet for the Hugo `print` output format.
-   Loaded from layouts/baseof.print.html. */
+   Loaded from layouts/baseof.print.html. Targets WeasyPrint's CSS Paged Media. */
+
+/* ---------- Named strings for the running header ----------
+
+   The page header on every non-cover page reads:
+     <docTitle> — <chapter> > <subChapter>
+
+   The separators " — " and " > " are embedded INSIDE each string-set token
+   list, not into the @top-center content. That way, when a section hasn't
+   been seen yet on this page (e.g. the TOC pages, or a level-0 page with no
+   sub-chapters) the corresponding named string is empty and no dangling
+   separator renders.
+
+   The cover's <h1 class="pdf-cover__title"> sets `doc-title`.
+   Every level-0 article's <h1 class="pdf-page__title"> sets `chapter` AND
+   resets `subchapter` to an empty string (so the arrow doesn't linger after
+   we leave a sub-chapter). Level-1 articles set `subchapter`. */
+
+.pdf-cover__title                   { string-set: doc-title content(text); }
+.pdf-page--level-0 .pdf-page__title { string-set: chapter " — " content(text), subchapter ""; }
+.pdf-page--level-1 .pdf-page__title { string-set: subchapter " > " content(text); }
+
+/* ---------- Page geometry ----------
+
+   Layout of the top margin:
+     ┌ 22 mm ────────────────────────────────┐   ← page top edge
+     │  @top-center box (height: 14 mm)      │
+     │    <text>                             │
+     │    ────── border-bottom (0.5 pt) ─────│   ← 14 mm below page top
+     │                                       │
+     │    (~8 mm of empty page margin)       │
+     └───────────────────────────────────────┘   ← 22 mm — content-area top
+
+   Fixing `height` on the margin-box means the box no longer stretches to
+   fill the entire top margin — WeasyPrint aligns it to the top and leaves
+   the remainder as blank page margin. This gives the border-bottom room to
+   breathe above the content, so a table or code block flush with the top
+   of the content-area no longer collides with the header rule. */
 
 @page {
   size: A4;
-  margin: 20mm 15mm;
+  /* Top margin (30mm) is intentionally deep so the header-rule box (12mm tall,
+     anchored at the top) is followed by ~18mm of blank page — enough that
+     content flush with the content-area top (e.g. tables, <pre>, alerts) never
+     touches the rule. */
+  margin: 30mm 15mm 20mm 15mm;
+
+  @top-left {
+    /* Left-aligned running header. When only one of @top-{left,center,right}
+       is defined, WeasyPrint stretches it to the full page-margin width. */
+    content: string(doc-title) string(chapter) string(subchapter);
+    color: #57606a;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    font-size: 9pt;
+    height: 6mm;
+    vertical-align: top;
+    text-align: left;
+    padding-top: 3mm;
+    padding-bottom: 1pt;
+    margin-bottom: 8mm;
+    border-bottom: 0.5pt solid #8c959f;
+    width: 100%;
+    white-space: nowrap;
+  }
+
   @bottom-right {
     content: counter(page);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 10pt;
     color: #57606a;
   }
+}
+
+/* Cover uses its own named page with no header and no page number. */
+@page cover {
+  size: A4;
+  margin: 0;
+  @top-left      { content: none; border-bottom: none; }
+  @top-center    { content: none; border-bottom: none; }
+  @top-right     { content: none; border-bottom: none; }
+  @bottom-right  { content: none; }
+  @bottom-center { content: none; }
+  @bottom-left   { content: none; }
+}
+
+/* First body page (typically the TOC) — hide the running header there because
+   `chapter`/`subchapter` are empty until we hit the first article. Page number
+   still renders. */
+@page :first {
+  @top-left { content: none; border-bottom: none; }
 }
 
 * { box-sizing: border-box; }
@@ -23,28 +102,44 @@ html, body {
   color: #1f2328;
 }
 
-/* ---------- Cover ---------- */
+/* ---------- Cover ----------
+
+   Layout via absolute positioning inside a page-sized wrapper: the title is
+   vertically centred (top:50% + translate), the date is pinned near the
+   bottom. WeasyPrint honours `page: cover` — the wrapper is exactly one A4
+   page tall with zero margins (see @page cover), so absolute coordinates map
+   directly to the page. */
 
 .pdf-cover {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  text-align: center;
+  page: cover;
   page-break-after: always;
   break-after: page;
+  position: relative;
+  width: 210mm;
+  height: 297mm;
+  margin: 0;
+  padding: 0;
+  text-align: center;
 }
+.pdf-cover > div:empty { display: none; }
 .pdf-cover__title {
-  margin: auto 0;
-  font-size: 42px;
+  position: absolute;
+  top: 50%;
+  left: 20mm;
+  right: 20mm;
+  transform: translateY(-50%);
+  margin: 0;
+  font-size: 32pt;
   font-weight: 700;
-  max-width: 80%;
   line-height: 1.2;
 }
 .pdf-cover__date {
-  margin-bottom: 40px;
-  font-size: 14px;
+  position: absolute;
+  left: 20mm;
+  right: 20mm;
+  bottom: 25mm;
+  margin: 0;
+  font-size: 12pt;
   color: #57606a;
 }
 
@@ -67,21 +162,17 @@ html, body {
 .pdf-toc__item a {
   color: #1f2328;
   text-decoration: none;
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
+  display: block;
 }
 .pdf-toc__item--level-0 > a { font-weight: 600; font-size: 12pt; }
 .pdf-toc__item--level-1 > a { font-size: 11pt; }
 .pdf-toc__item--level-2 > a { font-size: 10pt; color: #57606a; }
-.pdf-toc__dots {
-  flex: 1 0 auto;
-  border-bottom: 1px dotted #8c959f;
-  margin: 0 4px 4px 4px;
-  min-width: 12pt;
-}
-.pdf-toc__page {
-  flex: 0 0 auto;
+
+/* Trailing page number for every intra-document TOC link. WeasyPrint resolves
+   target-counter(attr(href), page) to the page on which the anchor's target
+   lands — replaces the old JS-computed offsets. */
+.pdf-toc__item a[href^="#"]::after {
+  content: leader('.') " " target-counter(attr(href url), page);
   color: #57606a;
   font-variant-numeric: tabular-nums;
   font-size: 10pt;

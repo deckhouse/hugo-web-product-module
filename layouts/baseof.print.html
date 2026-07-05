@@ -6,14 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ or .Site.Params.pdfTitle .Site.Title }}</title>
     <link rel="stylesheet" href="/{{ $lang }}/css/print.css">
-
-    {{/*
-      Reference the site-wide mermaid.min.js by absolute URL. The print-export.js
-      inliner will fetch it (locally first, then from the external mirror) and
-      embed it as a data URL — so the resulting PDF/DOCX is self-contained.
-    */}}
-    <script src="https://deckhouse.io/assets/js/mermaid.min.js"></script>
-    <script>mermaid.initialize({ startOnLoad: true });</script>
   </head>
   <body>
     {{- block "main" . }}{{- end }}
