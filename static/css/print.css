@@ -1,0 +1,364 @@
+/* Print stylesheet for the Hugo `print` output format.
+   Loaded from layouts/baseof.print.html. Targets WeasyPrint's CSS Paged Media. */
+
+/* ---------- Named strings for the running header ----------
+
+   The page header on every non-cover page reads:
+     <docTitle> — <chapter> > <subChapter>
+
+   The separators " — " and " > " are embedded INSIDE each string-set token
+   list, not into the @top-center content. That way, when a section hasn't
+   been seen yet on this page (e.g. the TOC pages, or a level-0 page with no
+   sub-chapters) the corresponding named string is empty and no dangling
+   separator renders.
+
+   The cover's <h1 class="pdf-cover__title"> sets `doc-title`.
+   Every level-0 article's <h1 class="pdf-page__title"> sets `chapter` AND
+   resets `subchapter` to an empty string (so the arrow doesn't linger after
+   we leave a sub-chapter). Level-1 articles set `subchapter`. */
+
+.pdf-cover__title                   { string-set: doc-title content(text); }
+.pdf-page--level-0 .pdf-page__title { string-set: chapter " — " content(text), subchapter ""; }
+.pdf-page--level-1 .pdf-page__title { string-set: subchapter " > " content(text); }
+
+/* ---------- Page geometry ----------
+
+   Layout of the top margin:
+     ┌ 22 mm ────────────────────────────────┐   ← page top edge
+     │  @top-center box (height: 14 mm)      │
+     │    <text>                             │
+     │    ────── border-bottom (0.5 pt) ─────│   ← 14 mm below page top
+     │                                       │
+     │    (~8 mm of empty page margin)       │
+     └───────────────────────────────────────┘   ← 22 mm — content-area top
+
+   Fixing `height` on the margin-box means the box no longer stretches to
+   fill the entire top margin — WeasyPrint aligns it to the top and leaves
+   the remainder as blank page margin. This gives the border-bottom room to
+   breathe above the content, so a table or code block flush with the top
+   of the content-area no longer collides with the header rule. */
+
+@page {
+  size: A4;
+  /* Top margin (30mm) is intentionally deep so the header-rule box (12mm tall,
+     anchored at the top) is followed by ~18mm of blank page — enough that
+     content flush with the content-area top (e.g. tables, <pre>, alerts) never
+     touches the rule. */
+  margin: 30mm 15mm 20mm 15mm;
+
+  @top-left {
+    /* Left-aligned running header. When only one of @top-{left,center,right}
+       is defined, WeasyPrint stretches it to the full page-margin width. */
+    content: string(doc-title) string(chapter) string(subchapter);
+    color: #57606a;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    font-size: 9pt;
+    height: 6mm;
+    vertical-align: top;
+    text-align: left;
+    padding-top: 3mm;
+    padding-bottom: 1pt;
+    margin-bottom: 8mm;
+    border-bottom: 0.5pt solid #8c959f;
+    width: 100%;
+    white-space: nowrap;
+  }
+
+  @bottom-right {
+    content: counter(page);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 10pt;
+    color: #57606a;
+  }
+}
+
+/* Cover uses its own named page with no header and no page number. */
+@page cover {
+  size: A4;
+  margin: 0;
+  @top-left      { content: none; border-bottom: none; }
+  @top-center    { content: none; border-bottom: none; }
+  @top-right     { content: none; border-bottom: none; }
+  @bottom-right  { content: none; }
+  @bottom-center { content: none; }
+  @bottom-left   { content: none; }
+}
+
+/* First body page (typically the TOC) — hide the running header there because
+   `chapter`/`subchapter` are empty until we hit the first article. Page number
+   still renders. */
+@page :first {
+  @top-left { content: none; border-bottom: none; }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-size: 11pt;
+  line-height: 1.5;
+  color: #1f2328;
+}
+
+/* ---------- Cover ----------
+
+   Layout via absolute positioning inside a page-sized wrapper: the title is
+   vertically centred (top:50% + translate), the date is pinned near the
+   bottom. WeasyPrint honours `page: cover` — the wrapper is exactly one A4
+   page tall with zero margins (see @page cover), so absolute coordinates map
+   directly to the page. */
+
+.pdf-cover {
+  page: cover;
+  page-break-after: always;
+  break-after: page;
+  position: relative;
+  width: 210mm;
+  height: 297mm;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+.pdf-cover > div:empty { display: none; }
+.pdf-cover__title {
+  position: absolute;
+  top: 50%;
+  left: 20mm;
+  right: 20mm;
+  transform: translateY(-50%);
+  margin: 0;
+  font-size: 32pt;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.pdf-cover__date {
+  position: absolute;
+  left: 20mm;
+  right: 20mm;
+  bottom: 25mm;
+  margin: 0;
+  font-size: 12pt;
+  color: #57606a;
+}
+
+/* ---------- TOC ---------- */
+
+.pdf-toc {
+  page-break-after: always;
+  break-after: page;
+}
+.pdf-toc__title {
+  font-size: 24pt;
+  margin: 0 0 16px 0;
+}
+.pdf-toc__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.pdf-toc__item { margin: 4px 0; }
+.pdf-toc__item a {
+  color: #1f2328;
+  text-decoration: none;
+  display: block;
+}
+.pdf-toc__item--level-0 > a { font-weight: 600; font-size: 12pt; }
+.pdf-toc__item--level-1 > a { font-size: 11pt; }
+.pdf-toc__item--level-2 > a { font-size: 10pt; color: #57606a; }
+
+/* Trailing page number for every intra-document TOC link. WeasyPrint resolves
+   target-counter(attr(href), page) to the page on which the anchor's target
+   lands — replaces the old JS-computed offsets. */
+.pdf-toc__item a[href^="#"]::after {
+  content: leader('.') " " target-counter(attr(href url), page);
+  color: #57606a;
+  font-variant-numeric: tabular-nums;
+  font-size: 10pt;
+}
+
+/* ---------- Pages ---------- */
+
+.pdf-page {
+  /* Articles flow continuously; only the cover and TOC force page breaks. */
+  margin-top: 16pt;
+}
+.pdf-page__title {
+  break-after: avoid;
+  page-break-after: avoid;
+  break-before: auto;
+  page-break-before: auto;
+  margin: 0 0 12pt 0;
+  line-height: 1.2;
+}
+/* Section-tree level drives visual heading weight: level-0 is a top-level
+   chapter, level-3+ is a leaf article. */
+.pdf-page__title--level-0 { font-size: 24pt; font-weight: 700; }
+.pdf-page__title--level-1 { font-size: 18pt; font-weight: 700; }
+.pdf-page__title--level-2 { font-size: 14pt; font-weight: 600; }
+.pdf-page__title--level-3 { font-size: 12pt; font-weight: 600; color: #24292f; }
+
+/* Force a page break before top-level chapters so each starts on a fresh
+   page (mirrors the sidebar's top-level grouping). */
+.pdf-page--level-0 {
+  break-before: page;
+  page-break-before: always;
+}
+
+/* Article-level headings share default weight/break-avoid behaviour, but
+   their font size depends on the article's depth in the section tree
+   (matches the TOC hierarchy). The article's own <h1 class="pdf-page__title">
+   acts as the level's "H+1" heading, so h2 inside a level-N article should
+   look like an H(N+2) heading overall. */
+.pdf-page h2, .pdf-page h3, .pdf-page h4, .pdf-page h5, .pdf-page h6 {
+  font-weight: 600;
+  break-after: avoid;
+  page-break-after: avoid;
+  margin-bottom: 6pt;
+}
+.pdf-page h4, .pdf-page h5, .pdf-page h6 { color: #57606a; }
+
+/* level-0 article: H1(title)=24pt, then in-content: h2=18, h3=14, h4=12, h5=11, h6=10.5 */
+.pdf-page--level-0 h2 { font-size: 18pt; margin-top: 16pt; }
+.pdf-page--level-0 h3 { font-size: 14pt; margin-top: 14pt; }
+.pdf-page--level-0 h4 { font-size: 12pt; margin-top: 12pt; }
+.pdf-page--level-0 h5 { font-size: 11pt; margin-top: 10pt; }
+.pdf-page--level-0 h6 { font-size: 10.5pt; margin-top: 10pt; }
+
+/* level-1 article: H1(title)=18pt, then in-content: h2=14, h3=12, h4=11, h5=10.5, h6=10 */
+.pdf-page--level-1 h2 { font-size: 14pt; margin-top: 14pt; }
+.pdf-page--level-1 h3 { font-size: 12pt; margin-top: 12pt; }
+.pdf-page--level-1 h4 { font-size: 11pt; margin-top: 10pt; }
+.pdf-page--level-1 h5 { font-size: 10.5pt; margin-top: 10pt; }
+.pdf-page--level-1 h6 { font-size: 10pt; margin-top: 10pt; }
+
+/* level-2 article: H1(title)=14pt, then in-content: h2=12, h3=11, h4=10.5, h5=10, h6=10 */
+.pdf-page--level-2 h2 { font-size: 12pt; margin-top: 12pt; }
+.pdf-page--level-2 h3 { font-size: 11pt; margin-top: 10pt; }
+.pdf-page--level-2 h4 { font-size: 10.5pt; margin-top: 10pt; }
+.pdf-page--level-2 h5 { font-size: 10pt; margin-top: 10pt; }
+.pdf-page--level-2 h6 { font-size: 10pt; margin-top: 10pt; }
+
+/* level-3+ article: H1(title)=12pt, in-content stays close to body size */
+.pdf-page--level-3 h2 { font-size: 11pt; margin-top: 10pt; }
+.pdf-page--level-3 h3 { font-size: 10.5pt; margin-top: 10pt; }
+.pdf-page--level-3 h4,
+.pdf-page--level-3 h5,
+.pdf-page--level-3 h6 { font-size: 10pt; margin-top: 10pt; }
+
+p, ul, ol { margin: 0 0 8pt 0; }
+
+pre, code {
+  font-family: "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 9.5pt;
+}
+pre {
+  background: #f6f8fa;
+  border: 1px solid #d0d7de;
+  border-radius: 4px;
+  padding: 10px 12px;
+  overflow: hidden;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+code { background: #f6f8fa; padding: 1px 4px; border-radius: 3px; }
+pre code { background: transparent; padding: 0; }
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 8pt 0;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+th, td {
+  border: 1px solid #d0d7de;
+  padding: 6px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+th { background: #f6f8fa; font-weight: 600; }
+
+figure, .mermaid {
+  break-inside: avoid;
+  page-break-inside: avoid;
+  margin: 8pt 0;
+  text-align: center;
+}
+.mermaid svg { max-width: 100%; height: auto; }
+
+img { max-width: 100%; height: auto; }
+
+blockquote {
+  border-left: 4px solid #d0d7de;
+  padding: 4px 12px;
+  margin: 8pt 0;
+  color: #57606a;
+}
+
+/* ---------- Alerts ---------- */
+
+.alert__wrap {
+  border-left: 4px solid;
+  padding: 12px 12px 12px 44px;
+  margin: 12px 0;
+  background: #f6f8fa;
+  position: relative;
+  border-radius: 4px;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.alert__wrap .alert__icon {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  width: 20px;
+  height: 20px;
+}
+.alert__wrap p { margin: 0; }
+.info.alert__wrap    { border-color: #0969da; background: #ddf4ff; }
+.warning.alert__wrap { border-color: #bf8700; background: #fff8c5; }
+.danger.alert__wrap  { border-color: #cf222e; background: #ffebe9; }
+
+/* ---------- Tabs (expanded sequentially) ---------- */
+
+.pdf-tabs { margin: 8pt 0; }
+.pdf-tab {
+  border: 1px solid #d0d7de;
+  border-radius: 4px;
+  margin: 8px 0;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.pdf-tab__title {
+  background: #f6f8fa;
+  padding: 6px 12px;
+  margin: 0;
+  font-weight: 600;
+  font-size: 0.95em;
+  border-bottom: 1px solid #d0d7de;
+}
+.pdf-tab__content { padding: 12px; }
+
+/* ---------- Details (always expanded) ---------- */
+
+.pdf-details { margin: 8pt 0; }
+.pdf-details__summary {
+  font-weight: 600;
+  margin: 8px 0 4px;
+}
+.pdf-details__content { }
+
+/* ---------- Small utility ---------- */
+
+.pdf-icon-edition {
+  display: inline-block;
+  font-size: 0.85em;
+  color: #57606a;
+  margin-left: 4px;
+}
+
+a { color: #0969da; }

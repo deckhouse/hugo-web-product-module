@@ -54,7 +54,8 @@ jobs:
   check-links:
     runs-on: ubuntu-latest
     name: Check Links
-    needs: build
+    needs: [build]
+    if: always() && needs.build.result == 'success'
     steps:
       - name: Download site artifacts
         uses: actions/download-artifact@v8
@@ -91,6 +92,8 @@ jobs:
             - "^/js/.+$"
             - "^/products/.+$"
             - "^/modules/.+$"
+          IgnoreInternalURLs:
+            - "documentation/downloads/print/.*\\.(pdf|docx)$"
           CheckMeta: false
           CheckLinks: false
           CheckMailto: false

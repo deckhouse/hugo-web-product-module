@@ -1,0 +1,21 @@
+{{- $levels := slice "info" "warning" "warn" "danger" }}
+{{- $level := "info" }}
+{{- $content := trim .content " \n" | markdownify }}
+{{- if and .level (in $levels (lower .level)) }}{{ $level = lower .level }}{{ end }}
+{{- if eq $level "warn" }}{{ $level = "warning" }}{{ end }}
+
+{{- $icon := "" }}
+{{- if eq $level "info" -}}
+  {{- $icon = `<svg class="alert__icon" width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="10" r="9" fill="#0969da"/><rect x="9" y="8" width="2" height="7" fill="#fff"/><circle cx="10" cy="5.5" r="1.2" fill="#fff"/></svg>` -}}
+{{- else if eq $level "warning" -}}
+  {{- $icon = `<svg class="alert__icon" width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10 1L19 18H1z" fill="#bf8700"/><rect x="9" y="7" width="2" height="6" fill="#fff"/><circle cx="10" cy="15.5" r="1.1" fill="#fff"/></svg>` -}}
+{{- else if eq $level "danger" -}}
+  {{- $icon = `<svg class="alert__icon" width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="10" r="9" fill="#cf222e"/><path d="M6.5 6.5l7 7M13.5 6.5l-7 7" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>` -}}
+{{- end -}}
+
+{{- if $content }}
+<div class="{{ $level }} alert__wrap">
+  {{ $icon | safeHTML }}
+  <div><p>{{ $content }}</p></div>
+</div>
+{{ end }}

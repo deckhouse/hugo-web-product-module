@@ -1,0 +1,51 @@
+{{ define "main" }}
+{{- $lang := .Language.Lang }}
+{{- $title := or .Site.Params.pdfTitle .Site.Title }}
+{{- $date := now.Format (T "date_format") }}
+{{- $genPrefix := T "generated_prefix" }}
+
+{{/* Collect the flat page list once — shared between TOC and content. */}}
+{{- $pages := partial "section-walk.html" (dict "parent" . "level" 0) }}
+
+{{/* Build permalink → anchor map for cross-link rewrite. */}}
+{{- $anchors := dict }}
+{{- range $pages }}
+  {{- $anchor := anchorize (trim .page.RelPermalink "/") }}
+  {{- $anchors = merge $anchors (dict .page.RelPermalink $anchor) }}
+{{- end }}
+
+<section class="pdf-cover">
+  <div></div>
+  <h1 class="pdf-cover__title">{{ $title | safeHTML }}</h1>
+  <div class="pdf-cover__date">{{ $genPrefix }} {{ $date }}</div>
+</section>
+
+<nav class="pdf-toc">
+  <h2 class="pdf-toc__title">{{ T "Documentation" | default "Documentation" }}</h2>
+  <ol class="pdf-toc__list">
+  {{- range $pages }}
+    {{- $anchor := index $anchors .page.RelPermalink }}
+    <li class="pdf-toc__item pdf-toc__item--level-{{ .level }}" style="margin-left: {{ mul .level 16 }}px;">
+      <a href="#{{ $anchor }}">{{ or .page.LinkTitle .page.Title }}</a>
+    </li>
+  {{- end }}
+  </ol>
+</nav>
+
+{{- range $pages }}
+  {{- $anchor := index $anchors .page.RelPermalink }}
+  {{- $content := .page.Content }}
+  {{/* Rewrite intra-doc links to in-document anchors. */}}
+  {{- range $from, $to := $anchors }}
+    {{- $pattern := printf `href=("|')%s(#[^"']*)?("|')` (replaceRE `([.^$+?|()\[\]{}\\])` `\\$1` $from) }}
+    {{- $content = replaceRE $pattern (printf `href=$1#%s$3` $to) $content }}
+  {{- end }}
+  {{/* Cap the heading level at 3 for CSS purposes — anything deeper stays h3-sized. */}}
+  {{- $level := .level }}
+  {{- if gt $level 3 }}{{ $level = 3 }}{{ end }}
+  <article class="pdf-page pdf-page--level-{{ $level }}" id="{{ $anchor }}">
+    <h1 class="pdf-page__title pdf-page__title--level-{{ $level }}">{{ .page.Title }}</h1>
+    {{ $content | safeHTML }}
+  </article>
+{{- end }}
+{{ end }}

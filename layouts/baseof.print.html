@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+{{- $lang := .Language.Lang }}
+<html lang="{{ $lang }}">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ or .Site.Params.pdfTitle .Site.Title }}</title>
+    <link rel="stylesheet" href="/{{ $lang }}/css/print.css">
+  </head>
+  <body>
+    {{- block "main" . }}{{- end }}
+  </body>
+</html>

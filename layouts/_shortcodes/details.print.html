@@ -1,0 +1,7 @@
+{{- $summary := or (.Get "summary") "Details" -}}
+<div class="pdf-details">
+  <p class="pdf-details__summary" role="heading" aria-level="7">{{ $summary | .Page.RenderString }}</p>
+  <div class="pdf-details__content">
+    {{ .Inner | .Page.RenderString (dict "display" "block") }}
+  </div>
+</div>

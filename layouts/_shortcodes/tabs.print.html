@@ -1,0 +1,10 @@
+{{- $tabs := .Store.Get "tabs" -}}
+{{- if .Inner -}}{{- /* referenced only to avoid Hugo's inner-content warning */ -}}{{- end -}}
+<div class="pdf-tabs">
+{{- range $i, $e := $tabs -}}
+  <section class="pdf-tab">
+    <p class="pdf-tab__title" role="heading" aria-level="7">{{ $e.name }}</p>
+    <div class="pdf-tab__content">{{ $e.content | $.Page.RenderString | safeHTML }}</div>
+  </section>
+{{- end -}}
+</div>

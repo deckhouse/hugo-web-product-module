@@ -1,0 +1,30 @@
+{{/*
+  section-walk.html — flat walk of a documentation section.
+
+  Input: a Page (section) to walk.
+  Output: a slice of {page, level} dicts in the same order as the sidebar,
+          respecting .Pages.ByWeight, skipping .Params.hidden and .Params.external.
+
+  Usage:
+    {{ $pages := partial "section-walk.html" (dict "parent" $sec "level" 0) }}
+    {{ range $pages }}
+      ...  {{ .page.Title }}  (indent by .level)
+    {{ end }}
+*/}}
+{{- $parent := .parent -}}
+{{- $level := .level | default 0 -}}
+{{- $result := slice -}}
+{{- range $parent.Pages.ByWeight -}}
+  {{- if not .Params.hidden -}}
+    {{- if not .Params.external -}}
+      {{- $result = $result | append (dict "page" . "level" $level) -}}
+      {{- if .Pages -}}
+        {{- $child := partial "section-walk.html" (dict "parent" . "level" (add $level 1)) -}}
+        {{- range $child -}}
+          {{- $result = $result | append . -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- return $result -}}
