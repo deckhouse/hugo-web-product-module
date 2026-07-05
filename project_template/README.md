@@ -20,16 +20,17 @@ To run locally:
 
 ## Generating PDF/DOCX exports
 
-`make pdf` builds the site and produces PDF+DOCX files under `public/{en,ru}/documentation/downloads/print/`.
+`make pdf` triggers the werf `print-artifacts` build and extracts the resulting files into
+`public/{en,ru}/documentation/downloads/print/<productCode>.{pdf,docx}` via `docker cp` from the
+built image.
 
-By default, the print scripts are fetched from the git tag pinned in `go.mod`
-(`github.com/deckhouse/hugo-web-product-module`) and cached under
-`~/.cache/hugo-web-product-module/<version>/scripts`.
+The print-generation logic lives entirely inside `werf.yaml`:
 
-To iterate on the scripts locally against a sibling clone of the module, point
-`TEMPLATE_DIR` at it (analogous to uncommenting the `replace` directive in
-`go.mod`):
+- `print-base` — an intermediate image with WeasyPrint, Pandoc, Node.js and npm dependencies.
+- `print-artifacts` — imports the built site from `web-artifacts`, clones the print scripts
+  from `github.com/deckhouse/hugo-web-product-module` at the git tag pinned in `go.mod`,
+  runs `print-export.js` for EN and RU, and exports the full site + PDF/DOCX to `/out`.
+- `web` — nginx image serving the combined tree.
 
-```bash
-make pdf TEMPLATE_DIR=../hugo-web-product-module
-```
+If `params.pdf` is not `true` in `config/_default/hugo.yaml`, the `print-artifacts` stage
+simply copies the site through without running the print pipeline.
