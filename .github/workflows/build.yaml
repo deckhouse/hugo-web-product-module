@@ -93,7 +93,7 @@ jobs:
             - "^/products/.+$"
             - "^/modules/.+$"
           IgnoreInternalURLs:
-            - "^/(en|ru)/documentation/downloads/print/.*\\.(pdf|docx)$"
+            - "documentation/downloads/print/.*\\.(pdf|docx)$"
           CheckMeta: false
           CheckLinks: false
           CheckMailto: false
