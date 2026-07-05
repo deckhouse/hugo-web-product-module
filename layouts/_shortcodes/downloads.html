@@ -2,7 +2,7 @@
 {{- $slug := lower site.Params.productCode -}}
 {{- $lang := .Page.Language.Lang -}}
 <div class="downloads" style="display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap;margin:16px 0;">
-  <a class="button button--outline" href="./documentation/downloads/print/{{ $slug }}.pdf" download>{{ T "download_pdf" }}</a>
-  <a class="button button--outline" href="./documentation/downloads/print/{{ $slug }}.docx" download>{{ T "download_docx" }}</a>
+  <a class="button button--outline" href="./downloads/print/{{ $slug }}.pdf" download>{{ T "download_pdf" }}</a>
+  <a class="button button--outline" href="./downloads/print/{{ $slug }}.docx" download>{{ T "download_docx" }}</a>
 </div>
 {{- end -}}
