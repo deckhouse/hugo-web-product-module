@@ -2,20 +2,6 @@
 <!--noindex-->
 
 <div class="sidebar__wrapper-inner">
-    {{- if site.Params.pdf }}
-      {{- $slug := lower site.Params.productCode }}
-      {{- $lang := .Language.Lang }}
-      <div class="sidebar__downloads">
-        <a class="sidebar__download sidebar__download--pdf"
-           href="/{{ $lang }}/documentation/downloads/print/{{ $slug }}.pdf" download>
-          {{ T "download_pdf" }}
-        </a>
-        <a class="sidebar__download sidebar__download--docx"
-           href="/{{ $lang }}/documentation/downloads/print/{{ $slug }}.docx" download>
-          {{ T "download_docx" }}
-        </a>
-      </div>
-    {{- end }}
     <nav class="sidebar__container">
         <ul class="sidebar" id="mysidebar">
             {{/* Get all sections on the first level */}}
