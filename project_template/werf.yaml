@@ -54,6 +54,13 @@ shell:
   setup:
   - |
     set -e
+    PDF_ENABLED=$(awk '/^  pdf:/ {print tolower($2); exit}' /src/config/_default/hugo.yaml)
+    mkdir -p /out
+    if [ "$PDF_ENABLED" != "true" ]; then
+      echo "params.pdf is not true — skipping PDF/DOCX generation."
+      cp -a /site/. /out/
+      exit 0
+    fi
     git config --global advice.detachedHead false
     export NODE_PATH=/deps/node_modules
     export PUBLIC_DIR=/site
@@ -72,7 +79,6 @@ shell:
     for i in $(seq 1 30); do curl -sf http://localhost:8088/ >/dev/null && break; sleep 1; done
     node /scripts/print-export.js en http://localhost:8088
     node /scripts/print-export.js ru http://localhost:8088
-    mkdir -p /out
     cp -a /site/. /out/
 ---
 image: web
