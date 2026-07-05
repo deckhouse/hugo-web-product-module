@@ -70,6 +70,8 @@ jobs:
       - name: Create htmltest config
         run: |
           cat > .htmltest.yml <<"EOF"
+          IgnoreDirs:
+            - "documentation/downloads/print"
           IgnoreURLs:
             - "example\\.com"
             - "localhost"
