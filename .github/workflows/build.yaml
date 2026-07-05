@@ -44,15 +44,6 @@ jobs:
           APP_NAME="${{ steps.app_name.outputs.app_name }}"
           find ./public/en ./public/ru -type f -name "*.html" -exec sed -i "s|/products/${APP_NAME}/|/|g" {} +
 
-      - name: Detect PDF activation
-        id: pdf_enabled
-        run: |
-          if [ -f public/en/print/documentation/index.html ]; then
-            echo "enabled=true" >> $GITHUB_OUTPUT
-          else
-            echo "enabled=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Upload site artifacts
         uses: actions/upload-artifact@v7
         with:
@@ -60,84 +51,10 @@ jobs:
           path: public/
           retention-days: 1
 
-    outputs:
-      pdf_enabled: ${{ steps.pdf_enabled.outputs.enabled }}
-
-  generate-exports:
-    runs-on: ubuntu-24.04
-    name: Generate PDF and DOCX
-    needs: build
-    if: needs.build.outputs.pdf_enabled == 'true'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-        with:
-          submodules: recursive
-
-      - name: Download built site
-        uses: actions/download-artifact@v8
-        with:
-          name: built-site
-          path: public
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-
-      - name: Install weasyprint, pandoc, Node deps
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq \
-            weasyprint pandoc yq poppler-utils \
-            fonts-dejavu-core fonts-liberation
-          mkdir -p /tmp/deps && cd /tmp/deps
-          npm init -y >/dev/null
-          npm install --silent --no-audit --no-fund cheerio http-server jszip
-
-      - name: Generate PDF and DOCX
-        env:
-          NODE_PATH: /tmp/deps/node_modules
-        run: |
-          set -e
-          # productCode → file name
-          if [ -f config/_default/hugo.yaml ]; then
-            PRODUCT_CODE=$(yq '.params.productCode // .Params.productCode // ""' config/_default/hugo.yaml | tr -d '"' | tr '[:upper:]' '[:lower:]')
-          fi
-          if [ -z "$PRODUCT_CODE" ] || [ "$PRODUCT_CODE" = "null" ]; then
-            REPO="${GITHUB_REPOSITORY##*/}"
-            PRODUCT_CODE="${REPO#website-}"
-            PRODUCT_CODE=$(echo "$PRODUCT_CODE" | tr '[:upper:]' '[:lower:]')
-          fi
-          export PRODUCT_CODE
-          echo "PRODUCT_CODE=$PRODUCT_CODE"
-
-          # Static file server on the built site
-          /tmp/deps/node_modules/.bin/http-server public -p 8080 -s > /tmp/http.log 2>&1 &
-          HTTP_PID=$!
-          trap "kill $HTTP_PID 2>/dev/null || true" EXIT
-
-          # Wait for the server to accept connections
-          for i in $(seq 1 30); do
-            curl -sf http://localhost:8080/ > /dev/null && break
-            sleep 1
-          done
-
-          node .github/scripts/print-export.js en http://localhost:8080
-          node .github/scripts/print-export.js ru http://localhost:8080
-
-      - name: Upload exports (append)
-        uses: actions/upload-artifact@v7
-        with:
-          name: built-site
-          path: public/
-          retention-days: 1
-          overwrite: true
-
   check-links:
     runs-on: ubuntu-latest
     name: Check Links
-    needs: [build, generate-exports]
+    needs: [build]
     if: always() && needs.build.result == 'success'
     steps:
       - name: Download site artifacts
