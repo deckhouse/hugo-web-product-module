@@ -92,7 +92,7 @@ jobs:
             - "^/js/.+$"
             - "^/products/.+$"
             - "^/modules/.+$"
-            - "^(/en|/ru)?/documentation/downloads/print/.*\\.(pdf|docx)$"
+            - "^.*/downloads/print/.*\\.(pdf|docx)$"
           CheckMeta: false
           CheckLinks: false
           CheckMailto: false
