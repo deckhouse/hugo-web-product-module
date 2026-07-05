@@ -17,3 +17,19 @@ To run locally:
    ```
 
 1. Open `http://localhost/products/<PRODUCT_CODE>/documentation/` in your browser (for the english version) or `http://ru.localhost/products/<PRODUCT_CODE>/documentation/` (for the russian version).
+
+## Generating PDF/DOCX exports
+
+`make pdf` builds the site and produces PDF+DOCX files under `public/{en,ru}/documentation/downloads/print/`.
+
+By default, the print scripts are fetched from the git tag pinned in `go.mod`
+(`github.com/deckhouse/hugo-web-product-module`) and cached under
+`~/.cache/hugo-web-product-module/<version>/scripts`.
+
+To iterate on the scripts locally against a sibling clone of the module, point
+`TEMPLATE_DIR` at it (analogous to uncommenting the `replace` directive in
+`go.mod`):
+
+```bash
+make pdf TEMPLATE_DIR=../hugo-web-product-module
+```
