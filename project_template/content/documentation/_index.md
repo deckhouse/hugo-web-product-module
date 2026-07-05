@@ -4,5 +4,6 @@ weight: 1
 outputs:
   - HTML
   - search
+  - print
 ---
 

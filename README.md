@@ -49,6 +49,74 @@ outputs:
 ---
 ```
 
+#### PDF/DOCX exports
+
+The module registers a `print` Hugo output format and ships a single-page
+`documentation/list.print.html` template that WeasyPrint + Pandoc convert into PDF and DOCX
+files at `/{en,ru}/documentation/downloads/print/<productCode>.{pdf,docx}`.
+
+##### Enabling in a consumer site
+
+1. **Enable the switch** in `config/_default/hugo.yaml`:
+
+   ```yaml
+   params:
+     productCode: <product-code>   # lower-case slug used as the output filename
+     pdf: true
+   ```
+
+   If `params.pdf` is missing or `false`, the werf `print-artifacts` stage passes the site
+   through unchanged and no PDF/DOCX are produced. Sidebar download buttons are also hidden.
+
+2. **Enable the `print` Hugo output** in the front matter of the documentation root
+   (`content/documentation/_index.md` and `_index.ru.md`):
+
+   ```yaml
+   outputs:
+     - HTML
+     - search
+     - print
+   ```
+
+   Without `print` in `outputs`, Hugo does not render
+   `/{en,ru}/print/documentation/index.html` and WeasyPrint has nothing to convert.
+
+3. **Add download buttons** where needed. The module's sidebar renders `Download PDF` /
+   `Download DOCX` links automatically once `params.pdf: true` is set
+   (`layouts/_partials/sidebar.html`). To add an in-content block on the documentation
+   landing page, ship a `downloads` shortcode in the consumer repo (see
+   [`website-stronghold` for an example](https://github.com/deckhouse/website-stronghold/blob/main/layouts/shortcodes/downloads.html)),
+   or write your own using i18n keys `download_pdf` / `download_docx` (defined in
+   `i18n/{en,ru}.yaml`).
+
+##### How it works
+
+The consumer's `werf.yaml` defines three images:
+
+- `print-base` — intermediate image with WeasyPrint, Pandoc, Node.js and npm dependencies.
+  Cached separately from the site so content changes don't rebuild the toolchain.
+- `print-artifacts` — imports the built site from `web-artifacts`, clones the print scripts
+  from this repository at the git tag pinned in the consumer's `go.mod`, runs
+  `.github/scripts/print-export.js` for EN and RU, and exports the full site + PDF/DOCX to
+  `/out`.
+- `web` — nginx image importing `/out` from `print-artifacts` into `/app`.
+
+Locally, `make pdf` triggers `werf build print-artifacts` and `docker cp`s the resulting
+files out of the built image into `public/{en,ru}/documentation/downloads/print/`.
+
+##### Requirements
+
+- `werf` and `docker` on the host.
+- Outbound access to `github.com` during the build (to clone the print scripts at the tag
+  pinned in `go.mod`).
+- Enough disk space for the intermediate `print-base` image (~1 GB with Node.js and
+  Pandoc + WeasyPrint dependencies).
+
+##### Disabling
+
+Omit `params.pdf` in `config/_default/hugo.yaml` or set it to `false`. The werf build still
+succeeds — the print pipeline is skipped and the site is served without the download paths.
+
 #### Related links
 
 ```yaml
