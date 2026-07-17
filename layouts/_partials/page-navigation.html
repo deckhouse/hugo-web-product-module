@@ -1,12 +1,14 @@
-{{- $currentPage := . }}
-{{- $pages := slice }}
-{{- with .CurrentSection }}
-  {{- range .RegularPages }}
-    {{- if and (not .Params.hidden) (ne .File.BaseFileName "404") }}
-      {{- $pages = $pages | append . }}
-    {{- end }}
-  {{- end }}
-{{- end }}
+{{- $currentPage := . -}}
+{{- $pages := slice -}}
+{{- with .FirstSection -}}
+  {{- $pages = $pages | append . -}}
+  {{- $walk := partial "section-walk.html" (dict "parent" . "level" 0) -}}
+  {{- range $walk -}}
+    {{- if not .page.IsSection -}}
+      {{- $pages = $pages | append .page -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
 {{- $prevPage := false }}
 {{- $nextPage := false }}
 {{- range $index, $page := $pages }}
@@ -27,7 +29,7 @@
       <a href="{{ .RelPermalink }}" class="page-navigation__link page-navigation__link--prev">
         <div class="page-navigation__arrow">←</div>
         <div class="page-navigation__content">
-          <div class="page-navigation__title">{{ .LinkTitle | default .Title }}</div>
+          <div class="page-navigation__title">{{ template "pageNavigationTitle" . }}</div>
         </div>
       </a>
     </div>
@@ -38,7 +40,7 @@
     <div class="page-navigation__next">
       <a href="{{ .RelPermalink }}" class="page-navigation__link page-navigation__link--next">
         <div class="page-navigation__content">
-          <div class="page-navigation__title">{{ .LinkTitle | default .Title }}</div>
+          <div class="page-navigation__title">{{ template "pageNavigationTitle" . }}</div>
         </div>
         <div class="page-navigation__arrow">→</div>
       </a>
@@ -49,3 +51,15 @@
   </div>
 </div>
 {{- end }}
+
+{{- define "pageNavigationTitle" -}}
+  {{- $page := . -}}
+  {{- $pageTitle := $page.LinkTitle | default $page.Title -}}
+  {{- $sectionTitle := "" -}}
+  {{- with $page.CurrentSection -}}
+    {{- if ne . $page -}}
+      {{- $sectionTitle = .LinkTitle | default .Title -}}
+    {{- end -}}
+  {{- end -}}
+  {{- with $sectionTitle }}{{ . }} / {{ end -}}{{ $pageTitle -}}
+{{- end -}}
