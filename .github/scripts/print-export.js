@@ -78,18 +78,30 @@ const localBase = baseUrl.replace(/\/$/, '');
 function candidatesFor(url) {
   if (/^https?:\/\//i.test(url)) return [url];
   if (url.startsWith('/')) return [localBase + url, externalBase + url];
-  // Relative path — resolve against the print page URL, then extract the
-  // absolute path and also try the external mirror.
+  // Relative path (e.g. `../images/foo.png` from an article whose original
+  // page lives outside /print/documentation/). Hugo didn't rewrite it, so we
+  // have to try a few plausible roots.
+  //
+  //   1. Resolve against printURL. This is correct when the asset actually
+  //      sits under /print/documentation/, which rarely happens for images
+  //      but does happen for things like `./stylesheet.css`.
+  //   2. Strip the leading `../` chain and try the tail as absolute on both
+  //      the local server and the external mirror (deckhouse.io serves the
+  //      canonical /images tree).
+  //   3. Try under /{lang}/ as an extra fallback.
+  const out = [];
   try {
     const abs = new URL(url, printURL);
-    const local = abs.toString();
-    if (abs.origin === new URL(localBase).origin) {
-      return [local, externalBase + abs.pathname + abs.search + abs.hash];
-    }
-    return [local];
-  } catch {
-    return [];
+    out.push(abs.toString());
+  } catch { /* fall through */ }
+  const tail = url.replace(/^(?:\.\.?\/)+/, '');
+  if (tail) {
+    out.push(localBase + '/' + tail);
+    out.push(externalBase + '/' + tail);
+    out.push(localBase + '/' + lang + '/' + tail);
+    out.push(externalBase + '/' + lang + '/' + tail);
   }
+  return out;
 }
 
 const mimeByExt = {
