@@ -287,7 +287,6 @@ th, td {
   /* Wrap long tokens (URLs, identifiers, inline <code>) so they never cause
      the containing table to expand horizontally beyond its allotted width. */
   overflow-wrap: anywhere;
-  word-break: break-word;
 }
 th { background: #f6f8fa; font-weight: 600; }
 /* Inline code inside table cells inherits the same wrapping behaviour —
@@ -296,7 +295,6 @@ th { background: #f6f8fa; font-weight: 600; }
 td code, th code {
   white-space: normal;
   overflow-wrap: anywhere;
-  word-break: break-word;
 }
 
 figure, .mermaid {

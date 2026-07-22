@@ -70,11 +70,26 @@ const localBase = baseUrl.replace(/\/$/, '');
  * Local http-server first (built-site assets like /en/css/print.css, /products/… .js
  * live there); external mirror second (e.g. /images/stronghold/*.png, which is not
  * in the built site — it's hosted on deckhouse.io).
+ *
+ * Relative paths (e.g. `../images/foo.png` in markdown that Hugo didn't rewrite)
+ * are resolved against printURL first, then tried on the external mirror by the
+ * same absolute-path root.
  */
 function candidatesFor(url) {
   if (/^https?:\/\//i.test(url)) return [url];
   if (url.startsWith('/')) return [localBase + url, externalBase + url];
-  return []; // relative — leave alone
+  // Relative path — resolve against the print page URL, then extract the
+  // absolute path and also try the external mirror.
+  try {
+    const abs = new URL(url, printURL);
+    const local = abs.toString();
+    if (abs.origin === new URL(localBase).origin) {
+      return [local, externalBase + abs.pathname + abs.search + abs.hash];
+    }
+    return [local];
+  } catch {
+    return [];
+  }
 }
 
 const mimeByExt = {
