@@ -11,7 +11,7 @@ jobs:
       group: build-${{ github.event.pull_request.head.ref || github.ref_name }}
       cancel-in-progress: true
     container:
-      image: ghcr.io/gohugoio/hugo:v0.162.1
+      image: ghcr.io/gohugoio/hugo:v0.163.3
       options: --user root
     steps:
       - name: Checkout code

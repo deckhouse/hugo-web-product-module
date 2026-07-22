@@ -16,7 +16,7 @@ replace github.com/deckhouse/hugo-web-product-module => ../hugo-web-product-modu
 
 or use use the modules configuration [replacements](https://gohugo.io/configuration/module/#replacements) option.
 
-The minimum required Hugo version is `v0.162.0` (uses the official `ghcr.io/gohugoio/hugo` image). The template relies on Hugo APIs introduced in `v0.156.0` (e.g. `hugo.Data`), so older versions are not supported.
+The minimum required Hugo version is `v0.163.3` (uses the official `ghcr.io/gohugoio/hugo` image). The template relies on Hugo APIs introduced in `v0.156.0` (e.g. `hugo.Data`), so older versions are not supported.
 
 ## Creating new Deckhouse product website
 
