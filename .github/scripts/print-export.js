@@ -70,11 +70,65 @@ const localBase = baseUrl.replace(/\/$/, '');
  * Local http-server first (built-site assets like /en/css/print.css, /products/… .js
  * live there); external mirror second (e.g. /images/stronghold/*.png, which is not
  * in the built site — it's hosted on deckhouse.io).
+ *
+ * Relative paths (e.g. `../images/foo.png` in markdown that Hugo didn't rewrite)
+ * are resolved against printURL first, then tried on the external mirror by the
+ * same absolute-path root.
  */
+// Product-code URL prefix that Hugo emits during local (non-CI) builds — e.g.
+// `/products/development-platform/…`. The CI workflow strips this prefix from
+// public/*.html post-build; on local `make pdf` runs it remains, so images
+// need to be tried both with and without it.
+const productPrefix = '/products/' + productCode + '/';
+
+/**
+ * Given an absolute site path (starts with '/'), return the list of plausible
+ * variants tried against localBase/externalBase, in order:
+ *   1. The path as-is.
+ *   2. productPrefix stripped (CI HTML dropped it, disk didn't; and vice versa).
+ *   3. productPrefix stripped, but the current /{lang}/ inserted at the root
+ *      (Hugo build stores per-language content under /{lang}/…, whereas the
+ *      productPrefix path is language-neutral).
+ *   4. productPrefix inserted, if it wasn't already there (rare — kept for
+ *      symmetry with the CI vs. non-CI cases).
+ */
+function pathVariants(p) {
+  const out = [p];
+  if (p.startsWith(productPrefix)) {
+    const stripped = '/' + p.slice(productPrefix.length);
+    out.push(stripped);
+    out.push('/' + lang + stripped);
+  } else {
+    out.push(productPrefix + p.replace(/^\//, ''));
+  }
+  return out;
+}
+
 function candidatesFor(url) {
   if (/^https?:\/\//i.test(url)) return [url];
-  if (url.startsWith('/')) return [localBase + url, externalBase + url];
-  return []; // relative — leave alone
+  if (url.startsWith('/')) {
+    const out = [];
+    for (const p of pathVariants(url)) {
+      out.push(localBase + p);
+      out.push(externalBase + p);
+    }
+    return out;
+  }
+  // Relative path (fallback for HTML that didn't go through
+  // absolutizeArticleRelUrls, or whose article had no data-source-permalink).
+  const out = [];
+  try {
+    const abs = new URL(url, printURL);
+    out.push(abs.toString());
+  } catch { /* fall through */ }
+  const tail = url.replace(/^(?:\.\.?\/)+/, '');
+  if (tail) {
+    out.push(localBase + '/' + tail);
+    out.push(externalBase + '/' + tail);
+    out.push(localBase + '/' + lang + '/' + tail);
+    out.push(externalBase + '/' + lang + '/' + tail);
+  }
+  return out;
 }
 
 const mimeByExt = {
@@ -115,6 +169,53 @@ async function toDataUrl(candidates) {
     }
   }
   throw new Error(errors.join('; '));
+}
+
+/**
+ * Resolve every relative URL inside an <article data-source-permalink="…">
+ * against that article's original permalink. Hugo emits relative image paths
+ * (e.g. `../images/foo.png`) that make sense on the article's own page but
+ * become dead links once the article is inlined into /{lang}/print/. Without
+ * this rewrite the subsequent asset inliner can't find them.
+ */
+function absolutizeArticleRelUrls(html) {
+  const $ = cheerio.load(html, { decodeEntities: false });
+  $('article[data-source-permalink]').each((_, el) => {
+    const perma = $(el).attr('data-source-permalink');
+    if (!perma) return;
+    // Ensure permalink ends with '/' so URL resolution treats it as a
+    // directory context, not a file.
+    const base = perma.endsWith('/') ? perma : perma + '/';
+    const rewrite = (val) => {
+      if (!val) return val;
+      if (/^(https?:|data:|blob:|mailto:|tel:|javascript:|#)/i.test(val)) return val;
+      if (val.startsWith('/')) return val;
+      try {
+        return new URL(val, 'http://__print__' + base).pathname;
+      } catch {
+        return val;
+      }
+    };
+    $(el).find('[src]').each((__, e) => $(e).attr('src', rewrite($(e).attr('src'))));
+    $(el).find('[href]').each((__, e) => {
+      const cur = $(e).attr('href');
+      // Don't touch in-document anchors — those are already rewritten to
+      // #anchor form by the Hugo template.
+      if (!cur || cur.startsWith('#')) return;
+      $(e).attr('href', rewrite(cur));
+    });
+    $(el).find('[srcset]').each((__, e) => {
+      const srcset = $(e).attr('srcset') || '';
+      const rewritten = srcset.split(',').map(part => {
+        const trimmed = part.trim();
+        const [u, ...descriptor] = trimmed.split(/\s+/);
+        const replaced = rewrite(u);
+        return descriptor.length ? replaced + ' ' + descriptor.join(' ') : replaced;
+      }).join(', ');
+      $(e).attr('srcset', rewritten);
+    });
+  });
+  return $.html();
 }
 
 /**
@@ -843,6 +944,9 @@ function extractDocTitle(html) {
 
   console.log(`[${lang}] Checking for mermaid diagrams ...`);
   html = await renderMermaidIfAny(html, tmpDir);
+
+  console.log(`[${lang}] Resolving relative URLs inside articles ...`);
+  html = absolutizeArticleRelUrls(html);
 
   console.log(`[${lang}] Inlining external assets from ${externalBase} ...`);
   html = await inlineAssetsCheerio(html);

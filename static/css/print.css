@@ -269,7 +269,12 @@ pre code { background: transparent; padding: 0; }
 
 table {
   border-collapse: collapse;
+  /* Fixed layout distributes column widths equally by default, so a single
+     wide cell can't push the table past the content-area width. Long tokens
+     inside cells are broken at any character (see td/th below). */
+  table-layout: fixed;
   width: 100%;
+  max-width: 100%;
   margin: 8pt 0;
   break-inside: avoid;
   page-break-inside: avoid;
@@ -279,8 +284,18 @@ th, td {
   padding: 6px 10px;
   text-align: left;
   vertical-align: top;
+  /* Wrap long tokens (URLs, identifiers, inline <code>) so they never cause
+     the containing table to expand horizontally beyond its allotted width. */
+  overflow-wrap: anywhere;
 }
 th { background: #f6f8fa; font-weight: 600; }
+/* Inline code inside table cells inherits the same wrapping behaviour —
+   otherwise a long identifier in a `String`/`Number`-style enumeration
+   overflows the cell. */
+td code, th code {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
 
 figure, .mermaid {
   break-inside: avoid;
