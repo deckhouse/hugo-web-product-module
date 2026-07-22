@@ -1,0 +1,65 @@
+{{- $currentPage := . -}}
+{{- $pages := slice -}}
+{{- with .FirstSection -}}
+  {{- $pages = $pages | append . -}}
+  {{- $walk := partial "section-walk.html" (dict "parent" . "level" 0) -}}
+  {{- range $walk -}}
+    {{- if not .page.IsSection -}}
+      {{- $pages = $pages | append .page -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- $prevPage := false }}
+{{- $nextPage := false }}
+{{- range $index, $page := $pages }}
+  {{- if eq $page $currentPage }}
+    {{- if gt $index 0 }}
+      {{- $prevPage = index $pages (sub $index 1) }}
+    {{- end }}
+    {{- if lt (add $index 1) (len $pages) }}
+      {{- $nextPage = index $pages (add $index 1) }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- if or $prevPage $nextPage }}
+<div class="page-navigation">
+  <div class="page-navigation__container">
+    {{- with $prevPage }}
+    <div class="page-navigation__prev">
+      <a href="{{ .RelPermalink }}" class="page-navigation__link page-navigation__link--prev">
+        <div class="page-navigation__arrow">←</div>
+        <div class="page-navigation__content">
+          <div class="page-navigation__title">{{ template "pageNavigationTitle" . }}</div>
+        </div>
+      </a>
+    </div>
+    {{- else }}
+    <div class="page-navigation__prev page-navigation__empty"></div>
+    {{- end }}
+    {{- with $nextPage }}
+    <div class="page-navigation__next">
+      <a href="{{ .RelPermalink }}" class="page-navigation__link page-navigation__link--next">
+        <div class="page-navigation__content">
+          <div class="page-navigation__title">{{ template "pageNavigationTitle" . }}</div>
+        </div>
+        <div class="page-navigation__arrow">→</div>
+      </a>
+    </div>
+    {{- else }}
+    <div class="page-navigation__next page-navigation__empty"></div>
+    {{- end }}
+  </div>
+</div>
+{{- end }}
+
+{{- define "pageNavigationTitle" -}}
+  {{- $page := . -}}
+  {{- $pageTitle := $page.LinkTitle | default $page.Title -}}
+  {{- $sectionTitle := "" -}}
+  {{- with $page.CurrentSection -}}
+    {{- if ne . $page -}}
+      {{- $sectionTitle = .LinkTitle | default .Title -}}
+    {{- end -}}
+  {{- end -}}
+  {{- with $sectionTitle }}{{ . }} / {{ end -}}{{ $pageTitle -}}
+{{- end -}}
