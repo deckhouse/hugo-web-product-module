@@ -43,7 +43,7 @@
   {{/* Cap the heading level at 3 for CSS purposes — anything deeper stays h3-sized. */}}
   {{- $level := .level }}
   {{- if gt $level 3 }}{{ $level = 3 }}{{ end }}
-  <article class="pdf-page pdf-page--level-{{ $level }}" id="{{ $anchor }}">
+  <article class="pdf-page pdf-page--level-{{ $level }}" id="{{ $anchor }}" data-source-permalink="{{ .page.RelPermalink }}">
     <h1 class="pdf-page__title pdf-page__title--level-{{ $level }}">{{ .page.Title }}</h1>
     {{ $content | safeHTML }}
   </article>

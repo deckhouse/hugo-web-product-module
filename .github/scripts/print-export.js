@@ -145,6 +145,53 @@ async function toDataUrl(candidates) {
 }
 
 /**
+ * Resolve every relative URL inside an <article data-source-permalink="…">
+ * against that article's original permalink. Hugo emits relative image paths
+ * (e.g. `../images/foo.png`) that make sense on the article's own page but
+ * become dead links once the article is inlined into /{lang}/print/. Without
+ * this rewrite the subsequent asset inliner can't find them.
+ */
+function absolutizeArticleRelUrls(html) {
+  const $ = cheerio.load(html, { decodeEntities: false });
+  $('article[data-source-permalink]').each((_, el) => {
+    const perma = $(el).attr('data-source-permalink');
+    if (!perma) return;
+    // Ensure permalink ends with '/' so URL resolution treats it as a
+    // directory context, not a file.
+    const base = perma.endsWith('/') ? perma : perma + '/';
+    const rewrite = (val) => {
+      if (!val) return val;
+      if (/^(https?:|data:|blob:|mailto:|tel:|javascript:|#)/i.test(val)) return val;
+      if (val.startsWith('/')) return val;
+      try {
+        return new URL(val, 'http://__print__' + base).pathname;
+      } catch {
+        return val;
+      }
+    };
+    $(el).find('[src]').each((__, e) => $(e).attr('src', rewrite($(e).attr('src'))));
+    $(el).find('[href]').each((__, e) => {
+      const cur = $(e).attr('href');
+      // Don't touch in-document anchors — those are already rewritten to
+      // #anchor form by the Hugo template.
+      if (!cur || cur.startsWith('#')) return;
+      $(e).attr('href', rewrite(cur));
+    });
+    $(el).find('[srcset]').each((__, e) => {
+      const srcset = $(e).attr('srcset') || '';
+      const rewritten = srcset.split(',').map(part => {
+        const trimmed = part.trim();
+        const [u, ...descriptor] = trimmed.split(/\s+/);
+        const replaced = rewrite(u);
+        return descriptor.length ? replaced + ' ' + descriptor.join(' ') : replaced;
+      }).join(', ');
+      $(e).attr('srcset', rewritten);
+    });
+  });
+  return $.html();
+}
+
+/**
  * Walk the frozen HTML with cheerio, download each remote-loaded asset (trying
  * local first, external mirror as fallback), and rewrite the HTML to reference
  * data: URLs. Returns the rewritten HTML string.
@@ -870,6 +917,9 @@ function extractDocTitle(html) {
 
   console.log(`[${lang}] Checking for mermaid diagrams ...`);
   html = await renderMermaidIfAny(html, tmpDir);
+
+  console.log(`[${lang}] Resolving relative URLs inside articles ...`);
+  html = absolutizeArticleRelUrls(html);
 
   console.log(`[${lang}] Inlining external assets from ${externalBase} ...`);
   html = await inlineAssetsCheerio(html);
