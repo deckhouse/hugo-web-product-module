@@ -75,20 +75,47 @@ const localBase = baseUrl.replace(/\/$/, '');
  * are resolved against printURL first, then tried on the external mirror by the
  * same absolute-path root.
  */
+// Product-code URL prefix that Hugo emits during local (non-CI) builds — e.g.
+// `/products/development-platform/…`. The CI workflow strips this prefix from
+// public/*.html post-build; on local `make pdf` runs it remains, so images
+// need to be tried both with and without it.
+const productPrefix = '/products/' + productCode + '/';
+
+/**
+ * Given an absolute site path (starts with '/'), return the list of plausible
+ * variants tried against localBase/externalBase, in order:
+ *   1. The path as-is.
+ *   2. productPrefix stripped (CI HTML dropped it, disk didn't; and vice versa).
+ *   3. productPrefix stripped, but the current /{lang}/ inserted at the root
+ *      (Hugo build stores per-language content under /{lang}/…, whereas the
+ *      productPrefix path is language-neutral).
+ *   4. productPrefix inserted, if it wasn't already there (rare — kept for
+ *      symmetry with the CI vs. non-CI cases).
+ */
+function pathVariants(p) {
+  const out = [p];
+  if (p.startsWith(productPrefix)) {
+    const stripped = '/' + p.slice(productPrefix.length);
+    out.push(stripped);
+    out.push('/' + lang + stripped);
+  } else {
+    out.push(productPrefix + p.replace(/^\//, ''));
+  }
+  return out;
+}
+
 function candidatesFor(url) {
   if (/^https?:\/\//i.test(url)) return [url];
-  if (url.startsWith('/')) return [localBase + url, externalBase + url];
-  // Relative path (e.g. `../images/foo.png` from an article whose original
-  // page lives outside /print/documentation/). Hugo didn't rewrite it, so we
-  // have to try a few plausible roots.
-  //
-  //   1. Resolve against printURL. This is correct when the asset actually
-  //      sits under /print/documentation/, which rarely happens for images
-  //      but does happen for things like `./stylesheet.css`.
-  //   2. Strip the leading `../` chain and try the tail as absolute on both
-  //      the local server and the external mirror (deckhouse.io serves the
-  //      canonical /images tree).
-  //   3. Try under /{lang}/ as an extra fallback.
+  if (url.startsWith('/')) {
+    const out = [];
+    for (const p of pathVariants(url)) {
+      out.push(localBase + p);
+      out.push(externalBase + p);
+    }
+    return out;
+  }
+  // Relative path (fallback for HTML that didn't go through
+  // absolutizeArticleRelUrls, or whose article had no data-source-permalink).
   const out = [];
   try {
     const abs = new URL(url, printURL);
