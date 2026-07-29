@@ -23,7 +23,7 @@ outputFormats:
   markdown:
     mediaType: text/markdown
     isPlainText: true
-    notAlternative: false
+    notAlternative: true
   corpus:
     mediaType: application/json
     baseName: corpus

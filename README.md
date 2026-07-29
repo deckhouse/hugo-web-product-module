@@ -114,6 +114,14 @@ Note on shortcode notation: prefer `{{</* … */>}}` for AI export when practica
 - `search.json` — plain text for the site search UI (`.Plain`, compact).
 - `corpus.json` — structured RAG corpus with Markdown bodies and `mdUrl` pointers.
 
+##### Sitemap
+
+Hugo generates `sitemap.xml` for search engines. The module's sitemap contains only
+canonical HTML URLs and excludes pages marked `hidden`, `noindex`, `external`, or
+`sitemap.disable: true`. AI-oriented outputs (`.md`, `llms.txt`, `corpus.json`),
+the search index, and print outputs are deliberately omitted; agents discover the
+Markdown documents through `llms.txt`.
+
 #### PDF/DOCX exports
 
 The module registers a `print` Hugo output format and ships a single-page
