@@ -83,12 +83,15 @@ There is no `llms-full.txt` (full-tree dump); use `corpus.json` or individual `i
      # - print   # optional PDF/DOCX pipeline
    ```
 
-3. **Optional summary** for the `llms.txt` blockquote (fallback: `languages.<lang>.params.description`):
+3. **Optional summary** for the `llms.txt` blockquote. The H1 is always
+   `languages.<lang>.title` (`site.Title`). Summary resolution order:
+   `params.llms.summary` → `languages.<lang>.params.description` →
+   `Documentation for <site.Title>.`
 
    ```yaml
    params:
      llms:
-       summary: "Documentation for Deckhouse <PRODUCT_NAME>."
+       summary: "Official documentation for Deckhouse Stronghold."
    ```
 
 ##### Shortcodes in Markdown / corpus

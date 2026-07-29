@@ -1,11 +1,10 @@
-# {{ .Title }}
+# {{ site.Title }}
 {{- $summary := "" -}}
 {{- with site.Params.llms }}{{ with .summary }}{{ $summary = . }}{{ end }}{{ end -}}
 {{- if not $summary }}{{ with site.Params.description }}{{ $summary = . }}{{ end }}{{ end -}}
-{{- if $summary }}
+{{- if not $summary }}{{ $summary = printf "Documentation for %s." site.Title }}{{ end }}
 
 > {{ $summary }}
-{{- end }}
 
 {{- $walk := partial "section-walk.html" (dict "parent" . "level" 0) -}}
 {{- $openedRootGroup := false -}}
