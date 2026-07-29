@@ -1,0 +1,4 @@
+{{- $summary := or (.Get "summary") (.Get 0) "Details" -}}
+### {{ $summary }}
+
+{{ trim .Inner " \n" | safeHTML }}

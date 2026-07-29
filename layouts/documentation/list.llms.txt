@@ -1,0 +1,26 @@
+# {{ .Title }}
+{{- $summary := "" -}}
+{{- with site.Params.llms }}{{ with .summary }}{{ $summary = . }}{{ end }}{{ end -}}
+{{- if not $summary }}{{ with site.Params.description }}{{ $summary = . }}{{ end }}{{ end -}}
+{{- if $summary }}
+
+> {{ $summary }}
+{{- end }}
+
+{{- $walk := partial "section-walk.html" (dict "parent" . "level" 0) -}}
+{{- $openedRootGroup := false -}}
+{{- range $walk -}}
+  {{- $p := .page -}}
+  {{- if $p.Params.noindex -}}{{- continue -}}{{- end -}}
+  {{- $md := $p.OutputFormats.Get "markdown" -}}
+  {{- if not $md -}}{{- continue -}}{{- end -}}
+  {{- if and (eq .level 0) $p.IsSection }}
+
+## {{ $p.LinkTitle }}
+{{ else if and (eq .level 0) (not $p.IsSection) (not $openedRootGroup) -}}
+  {{- $openedRootGroup = true }}
+
+## {{ $.LinkTitle }}
+{{ end -}}
+- [{{ $p.LinkTitle }}]({{ $md.Permalink }}){{- with $p.Description }}: {{ . | plainify | htmlUnescape | strings.TrimSpace }}{{- end }}
+{{ end -}}

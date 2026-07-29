@@ -1,0 +1,39 @@
+{{- $documents := slice -}}
+{{- $walk := partial "section-walk.html" (dict "parent" . "level" 0) -}}
+{{- range $walk -}}
+  {{- $p := .page -}}
+  {{- if or $p.Params.hidden $p.Params.noindex $p.Params.external -}}
+    {{- continue -}}
+  {{- end -}}
+  {{- $bc := slice -}}
+  {{- $skipTopSection := true -}}
+  {{- range $p.Ancestors.Reverse -}}
+    {{- if .IsHome -}}
+      {{- continue -}}
+    {{- end -}}
+    {{- if $skipTopSection -}}
+      {{- $skipTopSection = false -}}
+      {{- continue -}}
+    {{- end -}}
+    {{- $bc = $bc | append .LinkTitle -}}
+  {{- end -}}
+  {{- $mdUrl := "" -}}
+  {{- with $p.OutputFormats.Get "markdown" -}}
+    {{- $mdUrl = .RelPermalink -}}
+  {{- end -}}
+  {{- $path := strings.TrimPrefix "/" $p.Path -}}
+  {{- $documents = $documents | append (dict
+    "title" $p.Title
+    "url" $p.RelPermalink
+    "mdUrl" $mdUrl
+    "path" $path
+    "breadcrumbs" $bc
+    "keywords" ($p.Params.keywords | default slice)
+    "markdown" (printf "# %s\n\n%s" $p.Title ($p.RenderShortcodes | safeHTML | string))
+  ) -}}
+{{- end -}}
+{{- dict
+  "productCode" site.Params.productCode
+  "lang" site.Language.Lang
+  "documents" $documents
+| jsonify -}}

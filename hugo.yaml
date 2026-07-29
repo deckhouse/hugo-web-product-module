@@ -1,3 +1,7 @@
+mediaTypes:
+  text/markdown:
+    suffixes: ["md"]
+
 outputFormats:
   search:
     mediaType: application/json
@@ -11,3 +15,17 @@ outputFormats:
     isHTML: true
     notAlternative: true
     permalinkable: true
+  llms:
+    mediaType: text/plain
+    baseName: llms
+    isPlainText: true
+    notAlternative: true
+  markdown:
+    mediaType: text/markdown
+    isPlainText: true
+    notAlternative: false
+  corpus:
+    mediaType: application/json
+    baseName: corpus
+    isPlainText: true
+    notAlternative: true
