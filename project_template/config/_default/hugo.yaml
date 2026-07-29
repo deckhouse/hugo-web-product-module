@@ -45,7 +45,7 @@ disableKinds:
 #- robotsTXT
 - RSS
 #- section
-#- sitemap
+- sitemap
 - taxonomy
 - term
 
