@@ -1,0 +1,9 @@
+{{- $levels := slice "info" "warning" "warn" "danger" -}}
+{{- $level := "info" -}}
+{{- $content := trim .content " \n" -}}
+{{- if and .level (in $levels (lower .level)) }}{{ $level = lower .level }}{{ end -}}
+{{- if eq $level "warn" }}{{ $level = "warning" }}{{ end -}}
+{{- if $content -}}
+{{- $label := upper $level -}}
+> **{{ $label }}:** {{ $content | replaceRE "\n" "\n> " | safeHTML }}
+{{- end -}}

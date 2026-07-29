@@ -49,6 +49,79 @@ outputs:
 ---
 ```
 
+#### AI-friendly documentation exports
+
+The module can publish machine-readable documentation for AI agents and RAG pipelines:
+
+| Artifact | URL | Purpose |
+|----------|-----|---------|
+| `llms.txt` | `/{lang}/documentation/llms.txt` | Curated index (llms.txt spec): title, summary, links to Markdown pages |
+| Per-page Markdown | `/{lang}/documentation/.../index.md` | Page body with shortcodes expanded to Markdown |
+| `corpus.json` | `/{lang}/documentation/corpus.json` | JSON array of documents (`title`, `url`, `mdUrl`, `path`, `breadcrumbs`, `keywords`, `markdown`) for RAG |
+
+There is no `llms-full.txt` (full-tree dump); use `corpus.json` or individual `index.md` files instead.
+
+##### Enabling in a consumer site
+
+1. **Default page/section outputs** in `config/_default/hugo.yaml` (do not enable `home`):
+
+   ```yaml
+   outputs:
+     page: [HTML, markdown]
+     section: [HTML, markdown]
+   ```
+
+2. **Documentation root front matter** (`content/documentation/_index.md` and `_index.ru.md`):
+
+   ```yaml
+   outputs:
+     - HTML
+     - markdown
+     - search
+     - llms
+     - corpus
+     # - print   # optional PDF/DOCX pipeline
+   ```
+
+3. **Optional summary** for the `llms.txt` blockquote. The H1 is always
+   `languages.<lang>.title` (`site.Title`). Summary resolution order:
+   `params.llms.summary` → `languages.<lang>.params.description` →
+   `Documentation for <site.Title>.`
+
+   ```yaml
+   params:
+     llms:
+       summary: "Official documentation for Deckhouse Stronghold."
+   ```
+
+##### Shortcodes in Markdown / corpus
+
+Per-page `index.md` and the `markdown` field in `corpus.json` use Hugo `.RenderShortcodes` with format-specific templates (`*.markdown.md` / `*.corpus.json`). Module shortcodes are rewritten to Markdown:
+
+- `alert` → blockquote with level label
+- `tabs` / `tab` → `### Tab name` sections (all tabs included)
+- `details` → heading + body
+- `mermaid` → fenced `mermaid` code block
+- `translate` → translated string
+- `downloads` → Markdown links to PDF/DOCX (when `params.pdf` is enabled)
+
+Custom shortcodes in a product repo need matching `*.markdown.md` (and ideally `*.corpus.json`) variants; otherwise they stay as raw Hugo shortcode syntax in the export.
+
+Note on shortcode notation: prefer `{{</* … */>}}` for AI export when practical (output is not re-parsed as Markdown). `{{%/* tab */%}}` / `{{%/* details */%}}` still work; tab bodies that arrive as HTML are flattened to plain text in the Markdown export.
+
+##### `corpus.json` vs `search.json`
+
+- `search.json` — plain text for the site search UI (`.Plain`, compact).
+- `corpus.json` — structured RAG corpus with Markdown bodies and `mdUrl` pointers.
+
+##### Sitemap
+
+Hugo generates `sitemap.xml` for search engines. The module's sitemap contains only
+canonical HTML URLs and excludes pages marked `hidden`, `noindex`, `external`, or
+`sitemap.disable: true`. AI-oriented outputs (`.md`, `llms.txt`, `corpus.json`),
+the search index, and print outputs are deliberately omitted; agents discover the
+Markdown documents through `llms.txt`.
+
 #### PDF/DOCX exports
 
 The module registers a `print` Hugo output format and ships a single-page
@@ -74,7 +147,10 @@ files at `/{en,ru}/documentation/downloads/print/<productCode>.{pdf,docx}`.
    ```yaml
    outputs:
      - HTML
+     - markdown
      - search
+     - llms
+     - corpus
      - print
    ```
 

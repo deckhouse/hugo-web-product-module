@@ -1,0 +1,9 @@
+{{- if site.Params.pdf -}}
+{{- $slug := lower site.Params.productCode -}}
+{{- $doc := site.GetPage "/documentation" -}}
+{{- $docBase := "" -}}
+{{- with $doc }}{{ $docBase = strings.TrimSuffix "/" .Permalink }}{{ end -}}
+{{- if $docBase -}}
+[PDF]({{ $docBase }}/downloads/print/{{ $slug }}.pdf) · [DOCX]({{ $docBase }}/downloads/print/{{ $slug }}.docx)
+{{- end -}}
+{{- end -}}

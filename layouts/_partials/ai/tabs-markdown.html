@@ -1,0 +1,12 @@
+{{- $tabs := .Store.Get "tabs" -}}
+{{- if .Inner -}}{{- /* referenced to avoid Hugo's unused Inner warning */ -}}{{- end -}}
+{{- range $i, $e := $tabs }}
+### {{ $e.name }}
+
+{{- $c := trim ($e.content | string) " \n" -}}
+{{- /* {{% tab %}} often passes Inner already rendered as HTML */ -}}
+{{- if in $c "<" -}}
+  {{- $c = trim ($c | plainify | htmlUnescape) " \n" -}}
+{{- end }}
+{{ $c | safeHTML }}
+{{ end -}}
