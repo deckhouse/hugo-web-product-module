@@ -1,0 +1,36 @@
+{{/*
+  ai/section-index-markdown.html — Markdown counterpart of section-index.html.
+
+  Input: a section Page.
+  Output: a "Section contents" heading with a Markdown list of the direct child
+          pages, linking to their Markdown output. Empty when the section has no
+          listable children or sets .Params.no_list.
+*/}}
+{{- $lines := slice -}}
+{{- if not .Params.no_list -}}
+  {{- range .Pages.ByWeight -}}
+    {{- if or .Params.hidden .Params.noindex .Params.hide_summary -}}
+      {{- continue -}}
+    {{- end -}}
+    {{- $href := "" -}}
+    {{- if and .Params.external .Params.url -}}
+      {{- $href = .Params.url -}}
+    {{- else -}}
+      {{- with .OutputFormats.Get "markdown" -}}
+        {{- $href = .Permalink -}}
+      {{- end -}}
+    {{- end -}}
+    {{- if $href -}}
+      {{- $line := printf "- [%s](%s)" .LinkTitle $href -}}
+      {{- with .Description -}}
+        {{- $line = printf "%s: %s" $line (. | plainify | htmlUnescape | strings.TrimSpace) -}}
+      {{- end -}}
+      {{- $lines = $lines | append $line -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- if $lines -}}
+## {{ T "section_list_title" }}
+
+{{ delimit $lines "\n" | safeHTML }}
+{{ end -}}

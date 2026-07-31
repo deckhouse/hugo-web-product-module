@@ -1,0 +1,20 @@
+{{/*
+  ai/page-markdown.html — Markdown body of a documentation page for AI exports.
+
+  Input: a Page.
+  Returns: a string with the page title as H1, the content with shortcodes
+           rendered as Markdown, and — for sections — the list of child pages.
+
+  Usage:
+    {{ partial "ai/page-markdown.html" . | safeHTML }}
+*/}}
+{{- $blocks := slice (printf "# %s" .Title) -}}
+{{- with trim (.RenderShortcodes | safeHTML | string) "\n" -}}
+  {{- $blocks = $blocks | append . -}}
+{{- end -}}
+{{- if .IsSection -}}
+  {{- with trim (partial "ai/section-index-markdown.html" . | string) "\n" -}}
+    {{- $blocks = $blocks | append . -}}
+  {{- end -}}
+{{- end -}}
+{{- return delimit $blocks "\n\n" -}}

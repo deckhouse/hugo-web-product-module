@@ -1,3 +1,1 @@
-# {{ .Title }}
-
-{{ .RenderShortcodes | safeHTML }}
+{{ partial "ai/page-markdown.html" . | safeHTML }}

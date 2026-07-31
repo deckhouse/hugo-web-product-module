@@ -29,7 +29,7 @@
     "path" $path
     "breadcrumbs" $bc
     "keywords" ($p.Params.keywords | default slice)
-    "markdown" (printf "# %s\n\n%s" $p.Title ($p.RenderShortcodes | safeHTML | string))
+    "markdown" (partial "ai/page-markdown.html" $p | string)
   ) -}}
 {{- end -}}
 {{- dict
