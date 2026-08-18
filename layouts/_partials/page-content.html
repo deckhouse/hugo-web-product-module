@@ -4,8 +4,8 @@
     </div>
     <div class="post-content">
         {{.Content}}
-        {{ partial "page-navigation" . }}
         {{ partial "related-links" . }}
+        {{ partial "page-navigation" . }}
     </div>
    {{ if .IsSection }}
      {{ partial "section-index.html" . }}
