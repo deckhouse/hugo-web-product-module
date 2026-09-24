@@ -1,0 +1,48 @@
+{{- /*
+  Hugo's default table markup (tpl/tplimpl/embedded/templates/_markup/render-table.html). On REST API reference pages (params.openapi_tag)
+  long names in cells, such as `a[].b_c` or APIEntitiesProjectDetails, may wrap
+  (see _partials/openapi/wbr.html), so that tables fit the content column.
+*/ -}}
+{{- $wrap := isset .Page.Params "openapi_tag" -}}
+<table
+  {{- range $k, $v := .Attributes }}
+    {{- if $v }}
+      {{- printf " %s=%q" $k ($v | transform.HTMLEscape) | safeHTMLAttr }}
+    {{- end }}
+  {{- end }}>
+  <thead>
+    {{- range .THead }}
+      <tr>
+        {{- range . }}
+          <th
+            {{- with .Alignment }}
+              {{- printf " style=%q" (printf "text-align: %s" .) | safeHTMLAttr }}
+            {{- end -}}
+          >
+            {{- .Text -}}
+          </th>
+        {{- end }}
+      </tr>
+    {{- end }}
+  </thead>
+  <tbody>
+    {{- range .TBody }}
+      <tr>
+        {{- range . }}
+          <td
+            {{- with .Alignment }}
+              {{- printf " style=%q" (printf "text-align: %s" .) | safeHTMLAttr }}
+            {{- end -}}
+          >
+            {{- if $wrap -}}
+              {{- partial "openapi/wbr.html" .Text -}}
+            {{- else -}}
+              {{- .Text -}}
+            {{- end -}}
+          </td>
+        {{- end }}
+      </tr>
+    {{- end }}
+  </tbody>
+</table>
+{{- /**/ -}}

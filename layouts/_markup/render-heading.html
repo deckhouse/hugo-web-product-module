@@ -1,0 +1,16 @@
+{{- /*
+  The heading markup of Goldmark (no hook). On REST API reference pages (params.openapi_tag)
+  long headings, such as schema names, may wrap (see _partials/openapi/wbr.html).
+*/ -}}
+<h{{ .Level }} id="{{ .Anchor }}"
+  {{- range $k, $v := .Attributes -}}
+    {{- if ne $k "id" }}{{ printf " %s=%q" $k (string $v | transform.HTMLEscape) | safeHTMLAttr }}{{ end -}}
+  {{- end -}}
+>
+  {{- if isset .Page.Params "openapi_tag" -}}
+    {{- partial "openapi/wbr.html" .Text -}}
+  {{- else -}}
+    {{- .Text -}}
+  {{- end -}}
+</h{{ .Level }}>
+{{- /**/ -}}
