@@ -352,3 +352,31 @@ The same as the [alert shortcode](#user-content-alert-details), but used in temp
 ```
 {{ partial "alert" ( dict "level" "warning" "content" "Markdown content..." ) }}
 ```
+
+#### REST API reference from an OpenAPI spec
+
+`openapi/add-pages.html` turns an OpenAPI 3.0 spec into reference pages, one page per tag, in a
+[content adapter](https://gohugo.io/content-management/content-adapters/). The pages are ordinary
+section pages: they show up in the sidebar, the search index, the AI exports and the PDF/DOCX exports.
+
+1. Put the spec in JSON format into `assets/`, e.g. `assets/openapi/rest.json`.
+   YAML exports with anchors do not fit into `data/`: Hugo parses everything there on each build.
+1. Create `content/<section>/_content.gotmpl`:
+
+   ```go-html-template
+   {{ .EnableAllLanguages }}
+   {{ partial "openapi/add-pages.html" (dict "adapter" . "spec" "openapi/rest.json") }}
+   ```
+
+1. Add `assets/` to the `includePaths` of the `web-artifacts` image in `werf.yaml`.
+
+Each page lists the operations of its tag (parameters, request body, responses) and ends with the
+schemas those operations refer to. Operations without tags go to the "Other" page. The spec itself
+is published next to the pages as `<section>/openapi.json`. The captions of the generated pages are
+in English in every language; descriptions come from the spec as is.
+
+The generated pages carry `params.openapi_tag`. On these pages only, the `render-table.html` and
+`render-heading.html` hooks add line break opportunities to long names (`a[].b_c`,
+`APIEntitiesProjectDetails`), so that tables and headings fit the content column; on other pages
+the hooks render Hugo's default markup. The `render-blockquote.html` hook renders GitHub-style
+alerts (`> [!note]`, `> [!warning]`, `> [!caution]`) with the alert partial on every page.

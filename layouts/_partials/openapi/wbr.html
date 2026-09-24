@@ -1,0 +1,22 @@
+{{/*
+  openapi/wbr.html — line break opportunities for long names in rendered HTML.
+
+  Input: an HTML string.
+  Returns: the string with <wbr> after ".", "_", "/", ",", ":", "-", inside CamelCase
+           and every 20 characters of a longer run (hashes in examples).
+           Text only is changed, never tags and their attributes.
+*/}}
+{{- $text := "" -}}
+{{- range $i, $part := split (string .) "<" -}}
+  {{- $tag := "" -}}
+  {{- $body := $part -}}
+  {{- if gt $i 0 -}}
+    {{- $pair := split $part ">" -}}
+    {{- $tag = printf "<%s>" (index $pair 0) -}}
+    {{- $body = delimit (after 1 $pair) ">" -}}
+  {{- end -}}
+  {{- $body = $body | replaceRE `([._/,:-])` "$1<wbr>" | replaceRE `([a-z0-9])([A-Z])` "$1<wbr>$2" | replaceRE `([^\s<>&;]{20})` "$1<wbr>" -}}
+  {{- $text = printf "%s%s%s" $text $tag $body -}}
+{{- end -}}
+{{- $html := safeHTML $text -}}
+{{- return $html -}}

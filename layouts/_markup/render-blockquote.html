@@ -1,0 +1,15 @@
+{{- /*
+  Renders GitHub-style alerts (> [!note], > [!warning], > [!caution]; others as info),
+  used by the REST API spec descriptions, with the alert partial; other blockquotes
+  are rendered as Goldmark does without a hook.
+*/ -}}
+{{- if eq .Type "alert" -}}
+  {{- $level := "info" -}}
+  {{- if eq .AlertType "warning" }}{{ $level = "warning" }}{{ end -}}
+  {{- if eq .AlertType "caution" }}{{ $level = "danger" }}{{ end -}}
+  {{- $content := .Text | replaceRE `(?s)^\s*<p>(.*)</p>\s*$` "$1" -}}
+  {{- partial "alert.html" (dict "level" $level "content" $content) -}}
+{{- else -}}
+<blockquote>
+{{ .Text }}</blockquote>
+{{- end -}}

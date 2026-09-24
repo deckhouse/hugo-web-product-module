@@ -1,0 +1,72 @@
+{{/*
+  openapi/add-pages.html — REST API reference pages from an OpenAPI 3.0 spec,
+  for a content adapter (_content.gotmpl) of the section.
+
+  Input: dict
+    adapter — the content adapter context (`.` in _content.gotmpl);
+    spec    — path of the spec in JSON format in assets/, e.g. "openapi/rest.json".
+  Adds one page per tag of the spec (operations without tags go to "Other")
+  and publishes the spec next to the pages as openapi.json.
+  The pages carry params.openapi_tag, which the table and heading render hooks use.
+
+  Usage in content/<section>/_content.gotmpl:
+    {{ .EnableAllLanguages }}
+    {{ partial "openapi/add-pages.html" (dict "adapter" . "spec" "openapi/rest.json") }}
+*/}}
+{{- $adapter := .adapter -}}
+{{- $res := resources.Get .spec -}}
+{{- if not $res -}}
+  {{- errorf "openapi/add-pages: asset %q not found" .spec -}}
+{{- end -}}
+{{- $spec := $res | transform.Unmarshal -}}
+
+{{/* Publish the spec next to the pages: <section>/openapi.json */}}
+{{- $adapter.AddResource (dict
+  "path" "openapi.json"
+  "content" (dict "mediaType" "application/json" "value" $res.Content)
+) -}}
+
+{{/* Index operations by tag; operations without tags go to "Other".
+     Paths come sorted; methods follow the CRUD order. */}}
+{{- $byTag := newScratch -}}
+{{- range $path, $item := $spec.paths -}}
+  {{- range $method := slice "get" "post" "put" "patch" "delete" "head" "options" -}}
+    {{- with index $item $method -}}
+      {{- $entry := dict "path" $path "method" $method "op" . -}}
+      {{- range .tags | default (slice "Other") -}}
+        {{- $byTag.Add . (slice $entry) -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- $tags := $spec.tags -}}
+{{- if $byTag.Get "Other" -}}
+  {{- $tags = $tags | append (dict "name" "Other") -}}
+{{- end -}}
+
+{{- range $i, $tag := $tags -}}
+  {{- with $byTag.Get $tag.name -}}
+    {{- $description := "" -}}
+    {{- with $tag.description -}}
+      {{/* First sentence of the first paragraph, without Markdown links and code marks. */}}
+      {{- $text := index (split . "\n\n") 0 | replaceRE `\[([^\]]*)\]\([^)]*\)` "$1" | replaceRE `\s+` " " -}}
+      {{- $text = index (split (replace $text "`" "") ". ") 0 | replaceRE `[,\s]*(including|that)?:?\.?$` "" -}}
+      {{- $text = truncate 160 "…" $text -}}
+      {{- $description = cond (strings.HasSuffix $text "…") $text (printf "%s." $text) -}}
+    {{- else -}}
+      {{- $description = "REST API operations that have no tag in the specification." -}}
+    {{- end -}}
+    {{- $adapter.AddPage (dict
+      "path" (urlize $tag.name)
+      "title" $tag.name
+      "description" $description
+      "weight" (add 10 $i)
+      "params" (dict "openapi_tag" $tag.name)
+      "content" (dict
+        "mediaType" "text/markdown"
+        "value" (partial "openapi/tag-page.md" (dict "tag" $tag "ops" . "spec" $spec))
+      )
+    ) -}}
+  {{- end -}}
+{{- end -}}
