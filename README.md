@@ -23,10 +23,12 @@ The minimum required Hugo version is `v0.163.3` (uses the official `ghcr.io/gohu
 1. Use the folder `project_template` as a template for your new Deckhouse product website.
 1. Add content in the `content` folder and customize the configuration in the `config` folder.
    - Define product name and baseURL the `config/_default/hugo.yaml` file.
+1. Fill in `CLAUDE.md` with facts about the product: the template connects the site to the Deckhouse documentation plugins for Claude Code
+   through `.claude/settings.json`.
 
 ## Structure of the content
 
-...coming soon...
+The content layout, page parameters, shortcodes and render hooks available to authors are described in [AUTHORING.md](AUTHORING.md).
 
 ## Markup
 
@@ -294,62 +296,24 @@ After that, `params.edition: pro` in any page's front-matter (directly or via `c
 
 ### Shortcodes
 
-<div id="alert-details"></div>
-
-#### Alert
-
-There are following levels of alerts: `info`, `warning`, `danger`. The default level is `info`.
-
-```go
-{{< alert level="warning" >}}
-The warning message...
-{{< /alert >}}
-```
-
-#### Tabs
-
-```go
-{{< tabs name="tabs_uniq_name" >}}
-{{% tab name="Tab caption 1" %}}Tab 1 Content {{% /tab %}}
-{{% tab name="Tab caption 2" %}}Tab 2 Content {{% /tab %}}
-{{< /tabs >}}
-```
-
-#### Translate
-
-Translates content based on the current language using the translations defined in the `i18n` folder.
-
-```go
-{{< translate "version_of_module" >}}
-```
-
-<div id="shortcode-details"></div>
-
-#### Details
-
-```go
-{{% details "Summary..."%}}
-## Markdown content
-
-Markdown content...
-{{% /details %}}
-```
+The shortcodes (`alert`, `details`, `tabs`, `translate`, `mermaid`, `downloads`) and their parameters are described in [AUTHORING.md](AUTHORING.md#shortcodes).
+Keep that file in sync when you add or change a shortcode: a CI check fails if a shortcode is not documented there.
 
 ### Partials
 
 #### Details
 
-The same as the [details shortcode](#user-content-shortcode-details), but used in templates.
+The same as the [details shortcode](AUTHORING.md#details), but used in templates.
 
-```
+```go-html-template
 {{ partial "details" ( dict "summary" "Summary..." "content" "Markdown content..." ) }}
 ```
 
 #### Alert
 
-The same as the [alert shortcode](#user-content-alert-details), but used in templates.
+The same as the [alert shortcode](AUTHORING.md#alert), but used in templates.
 
-```
+```go-html-template
 {{ partial "alert" ( dict "level" "warning" "content" "Markdown content..." ) }}
 ```
 
