@@ -8,10 +8,6 @@ enabled in `.claude/settings.json`. This file holds only facts about this produc
 
 <Repository of the product, where to find it locally, and what to check there: handlers, configuration loading, e2e tests.>
 
-## Interface strings
-
-<Path to the product locale files in the product repository, for example `ui/src/i18n/en.json` and `ru.json`.>
-
 ## Product checks
 
 <Scripts or commands that verify the documentation against the product, for example a check of the configuration reference.>
