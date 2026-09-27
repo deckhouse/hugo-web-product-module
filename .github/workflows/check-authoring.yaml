@@ -1,0 +1,26 @@
+name: Check AUTHORING.md
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  check-authoring:
+    runs-on: ubuntu-latest
+    name: Every author-facing shortcode is documented
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Compare shortcodes with AUTHORING.md
+        run: |
+          missing=0
+          for name in $(ls layouts/_shortcodes | grep -v '\.print\.html$' | grep '\.html$' | sed 's/\.html$//' | sort -u); do
+            if ! grep -q -E "\{\{< ${name}[ >]" AUTHORING.md; then
+              echo "::error file=AUTHORING.md::Shortcode '${name}' from layouts/_shortcodes is not documented in AUTHORING.md"
+              missing=1
+            fi
+          done
+          exit $missing
