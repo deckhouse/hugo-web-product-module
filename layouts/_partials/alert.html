@@ -1,6 +1,8 @@
 {{- $levels :=  slice "info" "warning" "warn" "danger" }}
 {{- $level :=  "info" }}
-{{- $content := trim  .content " \n" | markdownify }}
+{{- /* Shortcodes pass the page so that the link render hook resolves relative links as in the page body. */ -}}
+{{- $content := trim .content " \n" }}
+{{- with .page }}{{ $content = $content | .RenderString }}{{ else }}{{ $content = $content | markdownify }}{{ end }}
 {{- if and .level (in $levels (lower .level) ) }}{{ $level = lower .level }}{{ end }}
 {{- if eq $level "warn" }}{{ $level = "warning" }}{{ end }}
 
