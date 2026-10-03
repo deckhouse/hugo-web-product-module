@@ -1,0 +1,10 @@
+{{- /* Context: dict "page" .Page "tabs" <tabs from tab.html> */ -}}
+{{- $page := .page -}}
+<div class="pdf-tabs">
+{{- range $i, $e := .tabs -}}
+  <section class="pdf-tab">
+    <p class="pdf-tab__title" role="heading" aria-level="7">{{ $e.name }}</p>
+    <div class="pdf-tab__content">{{ partial "tabs-nested.html" (dict "mode" "resolve" "html" ($e.content | $page.RenderString)) | safeHTML }}</div>
+  </section>
+{{- end -}}
+</div>

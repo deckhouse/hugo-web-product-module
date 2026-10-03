@@ -4,8 +4,9 @@
 ### {{ $e.name }}
 
 {{- $c := trim ($e.content | string) " \n" -}}
-{{- /* {{% tab %}} often passes Inner already rendered as HTML */ -}}
-{{- if in $c "<" -}}
+{{- /* {{% tab %}} passes Inner already rendered as HTML. {{< tab >}} passes Markdown,
+       which can contain angle brackets too, for example <PLACEHOLDER>, so check for a leading HTML block tag. */ -}}
+{{- if findRE `^<(p|div|ol|ul|pre|h[1-6]|table|blockquote|dl|hr|figure|details|section)[\s/>]` $c 1 -}}
   {{- $c = trim ($c | plainify | htmlUnescape) " \n" -}}
 {{- end }}
 {{ $c | safeHTML }}

@@ -127,6 +127,12 @@ Markdown content.
 
 `name` of `tabs` is optional; set a unique one when a page has several tab sets.
 
+Tab sets can be nested at any depth, including inside list items.
+
+Always write tabs as `{{</* tab */>}}`. Do not use `{{%/* tab */%}}` unless you need it for a specific reason:
+Hugo renders its content to HTML itself, with the source indent, so content indented by 4 or more spaces
+(for example, tabs nested in a list item inside another tab) becomes a code block, and the Markdown export flattens its code blocks to plain text.
+
 ### Translate
 
 `{{< translate "<key>" >}}` inserts a string from `i18n/{en,ru}.yaml` of the theme or the site in the page language.
