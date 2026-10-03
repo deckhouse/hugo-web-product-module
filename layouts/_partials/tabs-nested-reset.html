@@ -1,5 +1,14 @@
 <script>
 (function () {
+  // Finds a tab content block with findTabBlock() of tab.js: in the given tabs block first, then in the document.
+  // Falls back to document.getElementById() with a tab.js version that does not have findTabBlock().
+  function findBlock(scope, id) {
+    if (typeof window.findTabBlock === 'function') {
+      return window.findTabBlock(scope || document, id);
+    }
+    return document.getElementById(id);
+  }
+
   function resetNestedTabsToFirst(panel) {
     if (!panel) return;
 
@@ -14,7 +23,7 @@
     var onclickStr = firstBtn.getAttribute('onclick') || '';
     var match = onclickStr.match(/openTab\w*\(event,\s*'[^']*',\s*'[^']*',\s*'([^']+)'/);
     if (match) {
-      resetNestedTabsToFirst(document.getElementById(match[1]));
+      resetNestedTabsToFirst(findBlock(tabsBlock, match[1]));
     }
   }
 
@@ -27,7 +36,9 @@
     var origOpenTab = window.openTab;
     window.openTab = function (evt, linksClass, contentClass, contentId) {
       origOpenTab.apply(this, arguments);
-      resetNestedTabsToFirst(document.getElementById(contentId));
+      var trigger = evt && (evt.currentTarget || evt);
+      var scope = trigger && trigger.closest ? trigger.closest('.tabs-block') : null;
+      resetNestedTabsToFirst(findBlock(scope, contentId));
     };
   }
 

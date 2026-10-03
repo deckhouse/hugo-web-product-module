@@ -114,7 +114,7 @@ Section pages get the same auto-generated list of child pages as the HTML output
 `no_list` and `hide_summary` page parameters, so a section that hides its list in HTML hides it
 in the Markdown export too.
 
-Note on shortcode notation: prefer `{{</* … */>}}` for AI export when practical (output is not re-parsed as Markdown). `{{%/* tab */%}}` / `{{%/* details */%}}` still work; tab bodies that arrive as HTML are flattened to plain text in the Markdown export.
+Note on shortcode notation: prefer `{{</* … */>}}` for AI export when practical (output is not re-parsed as Markdown). `{{%/* tab */%}}` / `{{%/* details */%}}` still work; tab bodies that arrive as HTML are flattened to plain text in the Markdown export. For tabs, always use `{{</* tab */>}}` (see [AUTHORING.md](AUTHORING.md#tabs)).
 
 ##### `corpus.json` vs `search.json`
 
