@@ -127,6 +127,10 @@ Markdown content.
 
 `name` of `tabs` is optional; set a unique one when a page has several tab sets.
 
+The selected tab is remembered for the browser session by the tab set name and the tab label,
+and is opened again when the page is reloaded.
+Tab sets with the same name on different pages share the choice when their labels match.
+
 Tab sets can be nested at any depth, including inside list items.
 
 Always write tabs as `{{</* tab */>}}`. Do not use `{{%/* tab */%}}` unless you need it for a specific reason:

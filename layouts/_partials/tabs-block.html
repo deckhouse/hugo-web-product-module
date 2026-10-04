@@ -8,8 +8,12 @@
   <ul class="tabs tabs__container tabs__container--title">
   {{- range $i, $e := $tabs -}}
     {{- $id := printf "%s_%d" $tabs_name $i -}}
+    {{- /* The selected tab is saved to sessionStorage under the tab set name and restored by tab.js on page load,
+           as in the Jekyll tabs plugin of the Deckhouse Platform documentation. */ -}}
+    {{- $store_val := anchorize $e.name | default (string $i) -}}
     <li id="tab_{{ $id }}" href="javascript:void(0)" class="tabs__item {{ $btn_class }}{{ if (eq $i 0) }} active{{ end }}"
-       onclick="openTabAndSaveStatus(event, '{{ $btn_class }}', '{{ $cont_class }}', 'block_{{ $id }}');" >
+       data-store-key="{{ $tabs_name }}" data-store-val="{{ $store_val }}"
+       onclick="openTabAndSaveStatus(event, '{{ $btn_class }}', '{{ $cont_class }}', 'block_{{ $id }}', '{{ $tabs_name }}', '{{ $store_val }}');" >
       {{- $e.name -}}
     </li>
   {{- end -}}
