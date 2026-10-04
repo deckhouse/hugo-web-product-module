@@ -7,11 +7,22 @@
 {{/* Collect the flat page list once — shared between TOC and content. */}}
 {{- $pages := partial "section-walk.html" (dict "parent" . "level" 0) }}
 
-{{/* Build permalink → anchor map for cross-link rewrite. */}}
+{{/*
+  Build permalink → anchor and permalink → ids maps for cross-link rewrite.
+  Ids of headings and HTML anchors repeat across pages (`overview`, `installation`),
+  so in the print document every id inside a page gets the `<page anchor>--` prefix.
+*/}}
+{{- $idPattern := `(<[a-zA-Z][^<>]*?\sid=)("|')([^"']+)("|')` }}
 {{- $anchors := dict }}
+{{- $ids := dict }}
 {{- range $pages }}
   {{- $anchor := anchorize (trim .page.RelPermalink "/") }}
   {{- $anchors = merge $anchors (dict .page.RelPermalink $anchor) }}
+  {{- $pageIds := slice }}
+  {{- range findRESubmatch $idPattern .page.Content }}
+    {{- $pageIds = $pageIds | append (index . 3 | htmlUnescape) }}
+  {{- end }}
+  {{- $ids = merge $ids (dict .page.RelPermalink $pageIds) }}
 {{- end }}
 
 <section class="pdf-cover">
@@ -34,12 +45,34 @@
 
 {{- range $pages }}
   {{- $anchor := index $anchors .page.RelPermalink }}
+  {{- $pageIds := index $ids .page.RelPermalink }}
   {{- $content := .page.Content }}
-  {{/* Rewrite intra-doc links to in-document anchors. */}}
-  {{- range $from, $to := $anchors }}
-    {{- $pattern := printf `href=("|')%s(#[^"']*)?("|')` (replaceRE `([.^$+?|()\[\]{}\\])` `\\$1` $from) }}
-    {{- $content = replaceRE $pattern (printf `href=$1#%s$3` $to) $content }}
+  {{/*
+    Rewrite intra-doc links to in-document anchors. A link to a page of the print set
+    points to the page anchor; a link with a fragment points to the prefixed id,
+    or to the page anchor if the page has no such id. A same-page `#id` link written
+    in raw HTML (it bypasses the link render hook) gets the prefix too. Other links stay as is.
+  */}}
+  {{- range $m := findRESubmatch `href=("|')([^"']*)("|')` $content }}
+    {{- $href := index $m 2 | htmlUnescape }}
+    {{- $path := index (split $href "#") 0 }}
+    {{- $fragment := (urls.Parse $href).Fragment }}
+    {{- $target := "" }}
+    {{- with index $anchors $path }}
+      {{- $target = . }}
+      {{- if and $fragment (in (index $ids $path) $fragment) }}
+        {{- $target = printf "%s--%s" . $fragment }}
+      {{- end }}
+    {{- else }}
+      {{- if and (eq $path "") $fragment (in $pageIds $fragment) }}
+        {{- $target = printf "%s--%s" $anchor $fragment }}
+      {{- end }}
+    {{- end }}
+    {{- with $target }}
+      {{- $content = replace $content (index $m 0) (printf `href=%s#%s%s` (index $m 1) (htmlEscape .) (index $m 3)) }}
+    {{- end }}
   {{- end }}
+  {{- $content = replaceRE $idPattern (printf `${1}${2}%s--${3}${4}` $anchor) $content }}
   {{/* Cap the heading level at 3 for CSS purposes — anything deeper stays h3-sized. */}}
   {{- $level := .level }}
   {{- if gt $level 3 }}{{ $level = 3 }}{{ end }}
