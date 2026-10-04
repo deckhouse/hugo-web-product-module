@@ -20,10 +20,10 @@
 
     activateTabBtn(firstBtn);
 
-    var onclickStr = firstBtn.getAttribute('onclick') || '';
-    var match = onclickStr.match(/openTab\w*\(event,\s*'[^']*',\s*'[^']*',\s*'([^']+)'/);
-    if (match) {
-      resetNestedTabsToFirst(findBlock(tabsBlock, match[1]));
+    // getTabButtonArgs() of tab.js parses the onclick attribute; the HTML minifier changes its quotes.
+    var args = typeof window.getTabButtonArgs === 'function' ? window.getTabButtonArgs(firstBtn) : null;
+    if (args) {
+      resetNestedTabsToFirst(findBlock(tabsBlock, args[2]));
     }
   }
 
