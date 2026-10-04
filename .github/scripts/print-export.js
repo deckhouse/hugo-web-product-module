@@ -867,8 +867,9 @@ function prepareDocxHtml(html, lang) {
  * heading slugs like `parameters` or `usage` don't collide across pages.
  * Also rewrite intra-article `href="#X"` links so they still resolve.
  *
- * Cross-article links (whose target is a top-level article id) are left
- * untouched — those remain valid pointers to other articles.
+ * The Hugo print template already prefixes ids (`<article id>--<id>`) and
+ * rewrites links to them; such ids keep their names. Links whose target is
+ * an article id or an existing id of another article are left untouched.
  *
  * Runs on the frozen HTML for BOTH the PDF (WeasyPrint) and DOCX (Pandoc)
  * branches; without it WeasyPrint emits "Anchor defined twice" warnings and
@@ -878,6 +879,8 @@ function dedupeArticleIds(html) {
   const $ = cheerio.load(html, { decodeEntities: false });
   const articleIds = new Set();
   $('article[id]').each((_, el) => articleIds.add($(el).attr('id')));
+  const existingIds = new Set();
+  $('article[id] [id]').each((_, el) => existingIds.add($(el).attr('id')));
 
   // Per-article rename map: original id → unique id after prefix + suffix.
   // Used to rewrite intra-article href="#…" pointers to the same targets.
@@ -890,7 +893,7 @@ function dedupeArticleIds(html) {
     $(el).find('[id]').each((__, e) => {
       const cur = $(e).attr('id');
       if (!cur) return;
-      let candidate = prefix + cur;
+      let candidate = cur.startsWith(prefix) ? cur : prefix + cur;
       // Hugo emits both <h3 id="X"> and a sibling <span id="X"> anchor for the
       // same heading — after prefixing they collide. Append -N until unique.
       if (usedInThisArticle.has(candidate)) {
@@ -913,7 +916,7 @@ function dedupeArticleIds(html) {
       if (articleIds.has(target)) return;
       const renamed = rename.get(target);
       if (renamed) $(e).attr('href', '#' + renamed);
-      else $(e).attr('href', '#' + prefix + target);
+      else if (!existingIds.has(target)) $(e).attr('href', '#' + prefix + target);
     });
   });
 

@@ -165,8 +165,11 @@ Use it on the documentation home page (`documentation/_index.md`).
 
 ## Render hooks
 
-- **Links.** A relative link is resolved from the current page: if its path matches a page or a resource, the link is replaced with that page's URL;
+- **Links.** A relative link is looked up with `GetPage` relative to the directory of the page's source file,
+  in the page body and inside the `alert`, `details` and `tab` shortcodes.
+  If the path matches a page or a resource, the link is replaced with that page's URL;
   otherwise it is kept as written and the browser resolves it against the page URL.
+  For example, `../overview/` in `admin/home/mapping.md` points to `admin/overview.md`, not to `admin/home/overview.md`.
   Check every relative link in the rendered page.
   A link to a heading on the same page is written as `#heading`.
 - **GitHub-style alerts.** `> [!note]`, `> [!warning]` and `> [!caution]` blockquotes render as alerts
